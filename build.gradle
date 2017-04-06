@@ -1,0 +1,98 @@
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+group = 'org.araqnid'
+version = "0.0.${System.getenv("BUILD_NUMBER") ?: 0}"
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': project.description ?: project.name
+        if (version) attributes 'Implementation-Version': version
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://repo.araqnid.org/maven/"
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        sourceCompatibility = "1.8"
+        options.encoding = "UTF-8"
+        options.compilerArgs << "-parameters"
+        options.incremental = true
+        options.deprecation = true
+    }
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
+    }
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.java
+    from sourceSets.main.kotlin
+    classifier "sources"
+}
+
+apply plugin: 'maven-publish'
+publishing {
+    repositories {
+        maven {
+            url "https://repo.araqnid.org/maven/"
+            credentials {
+                username = 'repo-user'
+                password = 'repo-password'
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact(sourceJar) {
+                classifier "sources"
+            }
+        }
+    }
+}
+
+ext {
+    jacksonVersion = '2.8.7'
+    guiceVersion = '4.1.0'
+    guavaVersion = '21.0'
+}
+
+dependencies {
+    compile "com.google.guava:guava:$guavaVersion"
+    compile "org.slf4j:slf4j-api:1.7.25"
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+    compile "com.google.code.findbugs:jsr305:3.0.0"
+    compile "org.tukaani:xz:1.5"
+    compile "org.apache.commons:commons-compress:1.13"
+    compile "com.fasterxml.jackson.module:jackson-module-guice:$jacksonVersion"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-guava:$jacksonVersion"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion"
+    testCompile "junit:junit:4.12"
+    testCompile "org.hamcrest:hamcrest-library:1.3"
+    testCompile "org.mockito:mockito-core:2.7.21"
+}
+
+buildscript {
+    ext.kotlinVersion = '1.1.1'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    }
+}
