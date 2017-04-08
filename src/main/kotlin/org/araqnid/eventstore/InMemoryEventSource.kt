@@ -12,7 +12,7 @@ class InMemoryEventSource(val clock: Clock) : EventSource, EventReader, EventCat
                 { str -> InMemoryPosition(Integer.parseInt(str)) })
     }
 
-    private val content = CopyOnWriteArrayList<ResolvedEvent>()
+    val content = CopyOnWriteArrayList<ResolvedEvent>()
 
     override val storeReader: EventReader
         get() = this
