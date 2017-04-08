@@ -14,13 +14,13 @@ import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-abstract class SnapshotEventProcessor(baseDirectory: Path, objectMapper: ObjectMapper, positionCodec: PositionCodec, compatibilityVersion: Long, clock: Clock)
+abstract class SnapshotEventProcessor(baseDirectory: Path, objectMapper: ObjectMapper, positionCodec: PositionCodec, emptyPosition: Position, compatibilityVersion: Long, clock: Clock)
     : PollingEventSubscriptionService.Sink,
         JsonFileSnapshotPersister(baseDirectory, objectMapper, positionCodec, compatibilityVersion, clock) {
 
     val lock: ReadWriteLock = ReentrantReadWriteLock()
 
-     inline fun <T> withLock(lock: Lock, block: () -> T): T {
+    inline fun <T> withLock(lock: Lock, block: () -> T): T {
         lock.lock()
         try {
             return block()
@@ -32,7 +32,7 @@ abstract class SnapshotEventProcessor(baseDirectory: Path, objectMapper: ObjectM
     inline fun <T> withWriteLock(block:() -> T) = withLock(lock.writeLock(), block)
     inline fun <T> withReadLock(block:() -> T) = withLock(lock.readLock(), block)
 
-    private var lastPosition: Position? = null
+    var lastPosition = emptyPosition
 
     override fun accept(event: ResolvedEvent) {
         withWriteLock {
@@ -50,7 +50,7 @@ abstract class SnapshotEventProcessor(baseDirectory: Path, objectMapper: ObjectM
 
     override fun lockForSave(): PositionLock {
         lock.readLock().lock()
-        val saveStartedAt = lastPosition!!
+        val saveStartedAt = lastPosition
         return object : PositionLock {
             override val position: Position
                 get() = saveStartedAt
