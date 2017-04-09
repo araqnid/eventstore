@@ -1,6 +1,5 @@
 package org.araqnid.eventstore.filesystem
 
-import com.google.common.collect.ImmutableSet
 import com.google.common.io.ByteSource
 import com.google.common.io.MoreFiles
 import org.araqnid.eventstore.Blob
@@ -13,10 +12,8 @@ import org.araqnid.eventstore.EventStreamWriter
 import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.NoSuchStreamException
 import org.araqnid.eventstore.Position
-import org.araqnid.eventstore.PositionCodec
 import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
-import org.araqnid.eventstore.WrongExpectedVersionException
 import org.araqnid.eventstore.emptyStreamEventNumber
 import org.araqnid.eventstore.filterNotNull
 import org.araqnid.eventstore.positionCodecOfComparable
@@ -33,6 +30,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.ResolverStyle
 import java.time.temporal.ChronoField
+import java.util.Comparator.comparing
 import java.util.regex.Pattern
 import java.util.stream.Stream
 
@@ -52,7 +50,7 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
             val streamDirectory = streamDirectory(streamId)
             if (!Files.isDirectory(streamDirectory)) throw NoSuchStreamException(streamId)
             return Files.list(streamDirectory)
-                    .sorted(Comparator.comparing<Path, String> { it.fileName.toString() })
+                    .sorted(filenameComparator)
                     .map { readEvent(streamId, it) }
                     .filterNotNull()
                     .filter { it.event.eventNumber > after }
@@ -67,6 +65,7 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
             return streamDirectories.stream()
                     .flatMap { path -> Files.list(path) }
                     .filter { p -> p.fileName.toString() > afterFilename }
+                    .sorted(filenameComparator)
                     .map { readEvent(it) }
                     .filterNotNull()
         }
@@ -83,6 +82,7 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
             return Files.list(categoryDirectory)
                     .flatMap { path -> Files.list(path) }
                     .filter { p -> p.fileName.toString() > afterFilename }
+                    .sorted(filenameComparator)
                     .map { readEvent(it) }
                     .filterNotNull()
         }
@@ -171,5 +171,6 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
                 .toFormatter()
                 .withResolverStyle(ResolverStyle.STRICT)
                 .withZone(ZoneOffset.UTC)
+        private val filenameComparator: Comparator<Path> = comparing<Path, String> { it.fileName.toString() }
     }
 }
