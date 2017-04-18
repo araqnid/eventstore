@@ -28,7 +28,7 @@ class SnapshotEventSubscriptionService(val subscription: PollingEventSubscriptio
     private val emitter = listeners.proxy(SubscriptionListener::class.java)
     private val snapshotPersistenceExecutor = Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(snapshotPersister.javaClass.simpleName).build())
     private var writingSnapshot: CompletableFuture<Position>? = null
-    private val snapshotTrigger = SnapshotTrigger(positionCodec, snapshotInterval.multipliedBy(2), snapshotInterval.dividedBy(4), snapshotInterval, clock)
+    private val snapshotTrigger = SnapshotTrigger(positionCodec, snapshotInterval, snapshotInterval.dividedBy(4), snapshotInterval.multipliedBy(4), clock)
 
     interface SubscriptionListener : PollingEventSubscriptionService.SubscriptionListener {
         fun noSnapshot() {}
