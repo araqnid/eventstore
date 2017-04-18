@@ -10,50 +10,65 @@ import java.util.Comparator.comparing
 class SnapshotTrigger(val positionCodec: PositionCodec, val minimalSnapshotInterval: Duration, val quietPeriodAfterEvent: Duration, val patienceForQuietPeriod: Duration, val clock: Clock) {
     private val comparator = comparing({ po: PositionObserved -> po.position }, positionCodec::comparePositions)
 
-    private var lastEventReceived: PositionObserved? = null
-    private var lastSnapshot: PositionObserved? = null
-    private var snapshotBecameNeedful: PositionObserved? = null
+    private data class State(val lastEventReceived: PositionObserved? = null, val lastSnapshot: PositionObserved? = null, val snapshotBecameNeedful: PositionObserved? = null)
+
+    private var state = State()
 
     @Synchronized
     fun eventReceived(position: Position) {
-        lastEventReceived = observed(position)
-        if (snapshotBecameNeedful == null && (lastSnapshot == null || lastEventReceived!! > lastSnapshot!!))
-            snapshotBecameNeedful = lastEventReceived
+        nextState {
+            val now = observed(position)
+            if (snapshotBecameNeedful == null && (lastSnapshot == null || now > lastSnapshot)) {
+                copy(snapshotBecameNeedful = now, lastEventReceived = now)
+            }
+            else {
+                copy(lastEventReceived = now)
+            }
+        }
     }
 
     @Synchronized
     fun snapshotLoaded(position: Position) {
-        lastSnapshot = observed(position)
+        nextState {
+            val now = observed(position)
+            copy(lastSnapshot = now)
+        }
     }
 
     @Synchronized
     fun snapshotWritten(position: Position) {
-        lastSnapshot = observed(position)
-        if (snapshotBecameNeedful != null && lastSnapshot!! >= snapshotBecameNeedful!!)
-            snapshotBecameNeedful = null
+        nextState {
+            val now = observed(position)
+            if (snapshotBecameNeedful != null && now >= snapshotBecameNeedful) {
+                copy(lastSnapshot = now, snapshotBecameNeedful = null)
+            }
+            else {
+                copy(lastSnapshot = now)
+            }
+        }
     }
 
     @Synchronized
-    fun writeNewSnapshot(): Boolean {
+    fun writeNewSnapshot(): Boolean = state.run {
         if (lastEventReceived == null)
             return false
         if (lastSnapshot != null) {
-            if (since(lastSnapshot!!) <= minimalSnapshotInterval)
+            if (since(lastSnapshot) <= minimalSnapshotInterval)
                 return false
-            if (lastSnapshot!!.position == lastEventReceived!!.position)
+            if (lastSnapshot.position == lastEventReceived.position)
                 return false
         }
-        return since(lastEventReceived!!) >= quietPeriodAfterEvent
+        return since(lastEventReceived) >= quietPeriodAfterEvent
                 || since(snapshotBecameNeedful!!) >= patienceForQuietPeriod
     }
 
     @Synchronized
-    fun writeInitialSnapshot(): Boolean {
+    fun writeInitialSnapshot(): Boolean = state.run {
         if (lastEventReceived == null)
             return false
         if (lastSnapshot == null)
             return true
-        return lastEventReceived!! > lastSnapshot!!
+        return lastEventReceived > lastSnapshot
     }
 
     private fun since(positionObserved: PositionObserved) = Duration.between(positionObserved.instant, Instant.now(clock))
@@ -64,5 +79,9 @@ class SnapshotTrigger(val positionCodec: PositionCodec, val minimalSnapshotInter
 
     private operator fun PositionObserved.compareTo(other: PositionObserved): Int = comparePositions(this, other)
 
-    data class PositionObserved(val position: Position, val instant: Instant)
+    private inline fun nextState(block: State.() -> State): Unit {
+        state = state.block()
+    }
+
+    private data class PositionObserved(val position: Position, val instant: Instant)
 }
