@@ -47,25 +47,22 @@ class SnapshotTrigger(val positionCodec: PositionCodec, val minimalSnapshotInter
 
     @Synchronized
     fun writeNewSnapshot(): Boolean = state.run {
-        if (lastEventReceived == null)
-            return false
-        if (lastSnapshot != null) {
-            if (since(lastSnapshot) <= minimalSnapshotInterval)
-                return false
-            if (lastSnapshot.position == lastEventReceived.position)
-                return false
+        when {
+            lastEventReceived == null -> false
+            lastSnapshot != null && lastSnapshot.position == lastEventReceived.position -> false
+            lastSnapshot != null && since(lastSnapshot) <= minimalSnapshotInterval -> false
+            else -> since(lastEventReceived) >= quietPeriodAfterEvent
+                    || since(snapshotBecameNeedful!!) >= patienceForQuietPeriod
         }
-        return since(lastEventReceived) >= quietPeriodAfterEvent
-                || since(snapshotBecameNeedful!!) >= patienceForQuietPeriod
     }
 
     @Synchronized
     fun writeInitialSnapshot(): Boolean = state.run {
-        if (lastEventReceived == null)
-            return false
-        if (lastSnapshot == null)
-            return true
-        return lastEventReceived > lastSnapshot
+        when {
+            lastEventReceived == null -> false
+            lastSnapshot == null -> true
+            else -> lastEventReceived > lastSnapshot
+        }
     }
 
     private fun since(positionObserved: PositionObserved) = Duration.between(positionObserved.instant, Instant.now(clock))
