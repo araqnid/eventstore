@@ -5,11 +5,8 @@ import org.araqnid.eventstore.PositionCodec
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import java.util.Comparator.comparing
 
 class SnapshotTrigger(val positionCodec: PositionCodec, val minimalSnapshotInterval: Duration, val quietPeriodAfterEvent: Duration, val patienceForQuietPeriod: Duration, val clock: Clock) {
-    private val comparator = comparing({ po: PositionObserved -> po.position }, positionCodec::comparePositions)
-
     private data class State(val lastEventReceived: PositionObserved? = null, val lastSnapshot: PositionObserved? = null, val snapshotBecameNeedful: PositionObserved? = null)
 
     private var state = State()
@@ -75,9 +72,7 @@ class SnapshotTrigger(val positionCodec: PositionCodec, val minimalSnapshotInter
 
     private fun observed(position: Position) = PositionObserved(position, Instant.now(clock))
 
-    private fun comparePositions(left: PositionObserved, right: PositionObserved) = comparator.compare(left, right)
-
-    private operator fun PositionObserved.compareTo(other: PositionObserved): Int = comparePositions(this, other)
+    private operator fun PositionObserved.compareTo(other: PositionObserved): Int = positionCodec.comparePositions(this.position, other.position)
 
     private inline fun nextState(block: State.() -> State): Unit {
         state = state.block()
