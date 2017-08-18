@@ -39,7 +39,7 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
     override val categoryReader: EventCategoryReader = CategoryReader()
     override val streamReader: EventStreamReader = StreamReader()
     override val streamWriter: EventStreamWriter = StreamWriter()
-    override val positionCodec = positionCodecOfComparable(FilesystemPosition::class.java,
+    override val positionCodec = positionCodecOfComparable(
                 { (filename) -> filename.toString() },
                 { str -> FilesystemPosition(Paths.get(str)) })
 

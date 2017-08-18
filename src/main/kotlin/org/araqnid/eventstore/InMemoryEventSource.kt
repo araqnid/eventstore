@@ -7,7 +7,7 @@ import java.util.stream.Stream
 
 class InMemoryEventSource(val clock: Clock) : EventSource, EventReader, EventCategoryReader, EventStreamReader, EventStreamWriter {
     companion object {
-        val codec = positionCodecOfComparable(InMemoryPosition::class.java,
+        val codec = positionCodecOfComparable(
                 { (index) -> Integer.toString(index) },
                 { str -> InMemoryPosition(Integer.parseInt(str)) })
     }
