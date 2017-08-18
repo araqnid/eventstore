@@ -64,7 +64,7 @@ publishing {
 ext {
     jacksonVersion = '2.8.7'
     guiceVersion = '4.1.0'
-    guavaVersion = '21.0'
+    guavaVersion = '23.0'
 }
 
 dependencies {
