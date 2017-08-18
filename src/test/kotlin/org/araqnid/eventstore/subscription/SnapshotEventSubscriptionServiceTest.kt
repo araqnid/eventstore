@@ -423,12 +423,12 @@ class SnapshotEventSubscriptionServiceTest {
     private fun beginStopping(service: Service) {
         val reachedStopping = CompletableFuture<Any>()
         service.addListener(object : Service.Listener() {
-            override fun stopping(from: Service.State?) {
+            override fun stopping(from: Service.State) {
                 reachedStopping.complete(null)
             }
 
-            override fun failed(from: Service.State?, failure: Throwable?) {
-                reachedStopping.completeExceptionally(failure!!)
+            override fun failed(from: Service.State, failure: Throwable) {
+                reachedStopping.completeExceptionally(failure)
             }
         }, directExecutor())
         service.stopAsync()
@@ -442,7 +442,7 @@ class SnapshotEventSubscriptionServiceTest {
                 expectedFailureFuture.completeExceptionally(IllegalStateException("Service reached RUNNNING state"))
             }
 
-            override fun failed(from: Service.State?, failure: Throwable?) {
+            override fun failed(from: Service.State, failure: Throwable) {
                 expectedFailureFuture.complete(failure)
             }
         }, directExecutor())

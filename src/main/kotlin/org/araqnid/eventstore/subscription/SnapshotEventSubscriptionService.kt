@@ -55,7 +55,7 @@ class SnapshotEventSubscriptionService(val subscription: PollingEventSubscriptio
                         emitter.noSnapshot()
                     }
                     subscription.addListener(object : Service.Listener() {
-                        override fun failed(from: Service.State?, failure: Throwable?) {
+                        override fun failed(from: Service.State, failure: Throwable) {
                             notifyFailed(failure)
                         }
                     }, directExecutor())
@@ -132,7 +132,7 @@ class SnapshotEventSubscriptionService(val subscription: PollingEventSubscriptio
     private fun subscriptionStop(): CompletableFuture<*> {
         val promise = CompletableFuture<Any>()
         subscription.addListener(object : Service.Listener() {
-            override fun terminated(from: Service.State?) {
+            override fun terminated(from: Service.State) {
                 promise.complete(null)
             }
         }, directExecutor())
