@@ -71,8 +71,8 @@ ext {
 dependencies {
     compile "com.google.guava:guava:$guavaVersion"
     compile "org.slf4j:slf4j-api:1.7.25"
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8"
-    compile "org.jetbrains.kotlin:kotlin-reflect"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlinVersion"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
     compile "com.google.code.findbugs:jsr305:3.0.0"
     compile "org.tukaani:xz:1.5"
     compile "org.apache.commons:commons-compress:1.13"
