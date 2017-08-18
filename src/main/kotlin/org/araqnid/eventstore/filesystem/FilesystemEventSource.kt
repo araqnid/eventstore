@@ -18,7 +18,6 @@ import org.araqnid.eventstore.emptyStreamEventNumber
 import org.araqnid.eventstore.filterNotNull
 import org.araqnid.eventstore.positionCodecOfComparable
 import org.araqnid.eventstore.toListAndClose
-import org.araqnid.eventstore.useResource
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -113,7 +112,7 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
         override fun lastEventNumber(streamId: StreamId): Long {
             val dir = streamDirectory(streamId)
             if (!Files.isDirectory(dir)) return emptyStreamEventNumber
-            return Files.list(dir).useResource { stream ->
+            return Files.list(dir).use { stream ->
                 stream.filter { p -> filenamePattern.matcher(p.fileName.toString()).matches() }
                         .count() - 1
             }
