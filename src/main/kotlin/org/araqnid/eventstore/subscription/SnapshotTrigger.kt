@@ -6,74 +6,80 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
-class SnapshotTrigger(val positionCodec: PositionCodec, val minimalSnapshotInterval: Duration, val quietPeriodAfterEvent: Duration, val patienceForQuietPeriod: Duration, val clock: Clock) {
-    private data class State(val lastEventReceived: PositionObserved? = null, val lastSnapshot: PositionObserved? = null, val snapshotBecameNeedful: PositionObserved? = null)
+class SnapshotTrigger(
+        private val positionCodec: PositionCodec,
+        private val minimalSnapshotInterval: Duration,
+        private val quietPeriodAfterEvent: Duration,
+        private val patienceForQuietPeriod: Duration,
+        private val clock: Clock
+) {
+    private sealed class State {
+        abstract fun eventReceived(now: PositionObserved): State
+        abstract fun snapshotLoaded(now: PositionObserved): State
+        abstract fun snapshotWritten(now: PositionObserved): State
 
-    private var state = State()
+        object Empty : State() {
+            override fun eventReceived(now: PositionObserved) = InitialEventsReceived(now)
+            override fun snapshotLoaded(now: PositionObserved) = SnapshotComplete(lastSnapshot = now)
+            override fun snapshotWritten(now: PositionObserved) = throw IllegalStateException()
+        }
+
+        data class InitialEventsReceived(val lastEventReceived: PositionObserved, val becameNeedful: PositionObserved = lastEventReceived): State() {
+            override fun eventReceived(now: PositionObserved) = copy(lastEventReceived = now)
+            override fun snapshotLoaded(now: PositionObserved) = throw IllegalStateException()
+            override fun snapshotWritten(now: PositionObserved) = if (lastEventReceived > now) SnapshotOutdated(lastEventReceived, lastSnapshot = now) else SnapshotComplete(now)
+        }
+
+        data class SnapshotComplete(val lastSnapshot: PositionObserved): State() {
+            override fun eventReceived(now: PositionObserved) = SnapshotOutdated(now, lastSnapshot, becameNeedful = now)
+            override fun snapshotLoaded(now: PositionObserved) = throw IllegalStateException()
+            override fun snapshotWritten(now: PositionObserved) = throw IllegalStateException()
+        }
+
+        data class SnapshotOutdated(val lastEventReceived: PositionObserved, val lastSnapshot: PositionObserved, val becameNeedful: PositionObserved = lastEventReceived): State() {
+            override fun eventReceived(now: PositionObserved) = copy(lastEventReceived = now)
+            override fun snapshotLoaded(now: PositionObserved) = throw IllegalStateException()
+            override fun snapshotWritten(now: PositionObserved) = if (lastEventReceived > now) copy(lastSnapshot = now) else SnapshotComplete(now)
+        }
+    }
+
+    private var state: State = State.Empty
 
     @Synchronized
     fun eventReceived(position: Position) {
-        nextState {
-            val now = observed(position)
-            if (snapshotBecameNeedful == null && (lastSnapshot == null || now > lastSnapshot)) {
-                copy(snapshotBecameNeedful = now, lastEventReceived = now)
-            }
-            else {
-                copy(lastEventReceived = now)
-            }
-        }
+        state = state.eventReceived(observed(position))
     }
 
     @Synchronized
     fun snapshotLoaded(position: Position) {
-        nextState {
-            val now = observed(position)
-            copy(lastSnapshot = now)
-        }
+        state = state.snapshotLoaded(observed(position))
     }
 
     @Synchronized
     fun snapshotWritten(position: Position) {
-        nextState {
-            val now = observed(position)
-            if (snapshotBecameNeedful != null && now >= snapshotBecameNeedful) {
-                copy(lastSnapshot = now, snapshotBecameNeedful = null)
-            }
-            else {
-                copy(lastSnapshot = now)
-            }
-        }
+        state = state.snapshotWritten(observed(position))
     }
 
     @Synchronized
-    fun writeNewSnapshot(): Boolean = state.run {
-        when {
-            lastEventReceived == null -> false
-            lastSnapshot != null && lastSnapshot.position == lastEventReceived.position -> false
-            lastSnapshot != null && since(lastSnapshot) <= minimalSnapshotInterval -> false
-            else -> since(lastEventReceived) >= quietPeriodAfterEvent
-                    || since(snapshotBecameNeedful!!) >= patienceForQuietPeriod
-        }
-    }
+    fun writeInitialSnapshot(): Boolean = state is State.InitialEventsReceived || state is State.SnapshotOutdated
 
     @Synchronized
-    fun writeInitialSnapshot(): Boolean = state.run {
-        when {
-            lastEventReceived == null -> false
-            lastSnapshot == null -> true
-            else -> lastEventReceived > lastSnapshot
-        }
-    }
+    fun writeNewSnapshot(): Boolean = state.run { when (this) {
+        State.Empty, is State.SnapshotComplete -> false
+        is State.InitialEventsReceived -> since(lastEventReceived) >= quietPeriodAfterEvent || since(becameNeedful) >= patienceForQuietPeriod
+        is State.SnapshotOutdated -> since(lastSnapshot) > minimalSnapshotInterval && (since(lastEventReceived) >= quietPeriodAfterEvent || since(becameNeedful) >= patienceForQuietPeriod)
+    } }
 
     private fun since(positionObserved: PositionObserved) = Duration.between(positionObserved.instant, Instant.now(clock))
 
-    private fun observed(position: Position) = PositionObserved(position, Instant.now(clock))
+    private fun observed(position: Position) = PositionObserved(position, Instant.now(clock), positionCodec)
 
-    private operator fun PositionObserved.compareTo(other: PositionObserved): Int = positionCodec.comparePositions(this.position, other.position)
+    private data class PositionObserved(val position: Position, val instant: Instant, private val positionCodec: PositionCodec) : Comparable<PositionObserved> {
+        override fun compareTo(other: PositionObserved) =
+                positionCodec.comparePositions(this.position, other.position)
 
-    private inline fun nextState(block: State.() -> State): Unit {
-        state = state.block()
+        override fun toString() = "$position @ $instant"
     }
 
-    private data class PositionObserved(val position: Position, val instant: Instant)
+    override fun toString() = state.toString()
 }
