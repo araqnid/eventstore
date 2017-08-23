@@ -36,6 +36,7 @@ class SnapshotEventSubscriptionService(val subscription: PollingEventSubscriptio
         fun loadedSnapshot(position: Position) {}
         fun writingSnapshot() {}
         fun wroteSnapshot(position: Position) {}
+        fun initialReplayComplete(position: Position) {}
     }
 
     fun addListener(listener: SubscriptionListener, executor: Executor) {
@@ -154,7 +155,10 @@ class SnapshotEventSubscriptionService(val subscription: PollingEventSubscriptio
                 maybeWriteSnapshot(false)
             }
             else {
-                maybeWriteSnapshot(true).thenRun { notifyStarted() }
+                maybeWriteSnapshot(true).thenRun {
+                    listeners.emit { it.initialReplayComplete(position) }
+                    notifyStarted()
+                }
             }
         }
     }

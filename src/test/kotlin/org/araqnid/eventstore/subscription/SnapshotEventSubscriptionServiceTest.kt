@@ -64,6 +64,7 @@ class SnapshotEventSubscriptionServiceTest {
         inOrder.verify(subscriptionListener).noSnapshot()
         inOrder.verify(subscriptionListener).pollStarted(eventSource.storeReader.emptyStorePosition)
         inOrder.verify(subscriptionListener).pollFinished(eventSource.storeReader.emptyStorePosition, 0)
+        inOrder.verify(subscriptionListener).initialReplayComplete(eventSource.storeReader.emptyStorePosition)
         inOrder.verify(serviceListener).running()
 
         verify(snapshotPersister, never()).save()
@@ -102,6 +103,38 @@ class SnapshotEventSubscriptionServiceTest {
         inOrder.verify(subscriptionListener).pollFinished(event1.position, 1)
         inOrder.verify(snapshotPersister).save()
         inOrder.verify(subscriptionListener).wroteSnapshot(event1.position)
+        inOrder.verify(subscriptionListener).initialReplayComplete(event1.position)
+        inOrder.verify(serviceListener).running()
+
+        snapshotEventSubscriptionService.stopAsync().awaitTerminated()
+        assertThat(subscription.state(), equalTo(Service.State.TERMINATED))
+    }
+
+    @Test fun loads_snapshot_and_retains_it_if_no_more_events() {
+        val sink = mock<PollingEventSubscriptionService.Sink>()
+        val subscriptionListener = mock<SnapshotEventSubscriptionService.SubscriptionListener>()
+        val snapshotPersister = mock<SnapshotPersister>()
+        val serviceListener = mock<Service.Listener>()
+
+        val clock = Clock.systemUTC()
+        val eventSource = InMemoryEventSource(clock)
+        val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofSeconds(1))
+        snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
+        snapshotEventSubscriptionService.addListener(serviceListener, directExecutor())
+
+        val event1 = writeEvent(eventSource)
+
+        `when`(snapshotPersister.load()).thenReturn(event1.position)
+        snapshotEventSubscriptionService.startAsync().awaitRunning()
+
+        val inOrder = inOrder(snapshotPersister, subscriptionListener, serviceListener, sink)
+        inOrder.verify(subscriptionListener).loadingSnapshot()
+        inOrder.verify(snapshotPersister).load()
+        inOrder.verify(subscriptionListener).loadedSnapshot(event1.position)
+        inOrder.verify(subscriptionListener).pollStarted(event1.position)
+        inOrder.verify(subscriptionListener).pollFinished(event1.position, 0)
+        inOrder.verify(subscriptionListener).initialReplayComplete(event1.position)
         inOrder.verify(serviceListener).running()
 
         snapshotEventSubscriptionService.stopAsync().awaitTerminated()
@@ -138,6 +171,7 @@ class SnapshotEventSubscriptionServiceTest {
         inOrder.verify(subscriptionListener).writingSnapshot()
         inOrder.verify(snapshotPersister).save()
         inOrder.verify(subscriptionListener).wroteSnapshot(event2.position)
+        inOrder.verify(subscriptionListener).initialReplayComplete(event2.position)
         inOrder.verify(serviceListener).running()
 
         snapshotEventSubscriptionService.stopAsync().awaitTerminated()
@@ -195,6 +229,7 @@ class SnapshotEventSubscriptionServiceTest {
         inOrder.verify(subscriptionListener).noSnapshot()
         inOrder.verify(subscriptionListener).pollStarted(eventSource.storeReader.emptyStorePosition)
         inOrder.verify(subscriptionListener).pollFinished(eventSource.storeReader.emptyStorePosition, 0)
+        inOrder.verify(subscriptionListener).initialReplayComplete(eventSource.storeReader.emptyStorePosition)
         inOrder.verify(serviceListener).running()
         inOrder.verify(subscriptionListener).writingSnapshot()
         inOrder.verify(snapshotPersister).save()
