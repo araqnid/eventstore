@@ -1,16 +1,15 @@
 package org.araqnid.eventstore.subscription
 
-import org.araqnid.eventstore.ManualClock
+import com.timgroup.clocks.testing.ManualClock
 import org.araqnid.eventstore.TestPosition
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.Test
+import java.time.Clock
 import java.time.Duration
-import java.time.Instant
-import java.time.ZoneOffset
 
 class SnapshotTriggerTest {
-    private val clock = ManualClock(Instant.EPOCH, ZoneOffset.UTC)
+    private val clock = ManualClock.initiallyAt(Clock.systemDefaultZone())
     private val trigger = SnapshotTrigger(TestPosition.codec, Duration.ofMinutes(5), Duration.ofSeconds(30), Duration.ofMinutes(2), clock)
 
     @Test fun no_snapshot_in_default_state() {
