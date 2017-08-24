@@ -7,10 +7,10 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executor
 
 internal class ListenerSet<L> {
-    private val listeners = CopyOnWriteArrayList<Dispatch<L>>()
+    private val listeners: MutableList<Dispatch<L>> = CopyOnWriteArrayList()
 
     fun addListener(listener: L, executor: Executor) {
-        listeners.add(Dispatch(listener, executor))
+        listeners += Dispatch(listener, executor)
     }
 
     fun emit(command: (L) -> Unit) {
