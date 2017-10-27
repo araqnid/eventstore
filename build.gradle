@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'org.jetbrains.kotlin.jvm'
 
 group = 'org.araqnid'
-version = project.hasProperty('version') ? project.getProperty('version') : new ByteArrayOutputStream().withStream { os ->
+version = new ByteArrayOutputStream().withStream { os ->
     exec {
         commandLine = ["git", "describe", "--always"]
         standardOutput = os
