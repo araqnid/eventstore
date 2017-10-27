@@ -8,22 +8,24 @@ interface EventSource {
     val categoryReader: EventCategoryReader
     val streamReader: EventStreamReader
     val streamWriter: EventStreamWriter
-    val positionCodec: PositionCodec
 }
 
 interface EventReader {
     fun readAllForwards(after: Position = emptyStorePosition): Stream<ResolvedEvent>
     val emptyStorePosition: Position
+    val positionCodec: PositionCodec
 }
 
 interface EventCategoryReader {
     fun readCategoryForwards(category: String, after: Position = emptyCategoryPosition(category)): Stream<ResolvedEvent>
     fun emptyCategoryPosition(category: String): Position
+    val positionCodec: PositionCodec
 }
 
 interface EventStreamReader {
     @Throws(NoSuchStreamException::class)
     fun readStreamForwards(streamId: StreamId, after: Long = emptyStreamEventNumber): Stream<ResolvedEvent>
+    val positionCodec: PositionCodec
 }
 
 const val emptyStreamEventNumber: Long = -1

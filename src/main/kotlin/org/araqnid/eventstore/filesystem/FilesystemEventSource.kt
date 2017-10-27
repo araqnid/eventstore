@@ -38,11 +38,6 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
     override val categoryReader: EventCategoryReader = CategoryReader()
     override val streamReader: EventStreamReader = StreamReader()
     override val streamWriter: EventStreamWriter = StreamWriter()
-    override val positionCodec = positionCodecOfComparable(
-                { (filename) -> filename.toString() },
-                { str -> FilesystemPosition(Paths.get(str)) })
-
-    private val emptyStorePosition = FilesystemPosition(Paths.get(""))
 
     internal inner class StreamReader : EventStreamReader {
         override fun readStreamForwards(streamId: StreamId, after: Long): Stream<ResolvedEvent> {
@@ -54,6 +49,8 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
                     .filterNotNull()
                     .filter { it.event.eventNumber > after }
         }
+
+        override val positionCodec = FilesystemEventSource.positionCodec
     }
 
     internal inner class StoreReader : EventReader {
@@ -69,8 +66,9 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
                     .filterNotNull()
         }
 
-        override val emptyStorePosition: Position
-            get() = this@FilesystemEventSource.emptyStorePosition
+        override val emptyStorePosition: Position = FilesystemEventSource.emptyStorePosition
+
+        override val positionCodec = FilesystemEventSource.positionCodec
     }
 
     internal inner class CategoryReader : EventCategoryReader {
@@ -86,7 +84,9 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
                     .filterNotNull()
         }
 
-        override fun emptyCategoryPosition(category: String): Position = this@FilesystemEventSource.emptyStorePosition
+        override fun emptyCategoryPosition(category: String): Position = FilesystemEventSource.emptyStorePosition
+
+        override val positionCodec = FilesystemEventSource.positionCodec
     }
 
     internal inner class StreamWriter : AbstractStreamWriter() {
@@ -155,6 +155,11 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
     }
 
     companion object {
+        val positionCodec = positionCodecOfComparable(
+                { (filename) -> filename.toString() },
+                { str -> FilesystemPosition(Paths.get(str)) })
+        private val emptyStorePosition = FilesystemPosition(Paths.get(""))
+
         private val filenamePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z)\\.([0-9a-f]+)\\.(.+)\\.data\\.json")!!
         private val dateFormatter = DateTimeFormatterBuilder()
                 .append(DateTimeFormatter.ISO_LOCAL_DATE)

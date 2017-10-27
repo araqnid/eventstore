@@ -10,9 +10,9 @@ import org.araqnid.eventstore.EventStreamReader
 import org.araqnid.eventstore.EventStreamWriter
 import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.Position
+import org.araqnid.eventstore.PositionCodec
 import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
-import org.araqnid.eventstore.WrongExpectedVersionException
 import org.araqnid.eventstore.collectAndClose
 import org.araqnid.eventstore.emptyStreamEventNumber
 import org.araqnid.eventstore.filterNotNull
@@ -37,15 +37,6 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
     override val categoryReader: EventCategoryReader = CategoryReader()
     override val streamReader: EventStreamReader = StreamReader()
     override val streamWriter: EventStreamWriter = StreamWriter()
-    override val positionCodec = positionCodecOfComparable(
-            { p -> p.toString() },
-            { str ->
-                val index = str.indexOf('#')
-                if (index < 0)
-                    LooseFile(str)
-                else
-                    PackedFile(str.substring(0, index - 1), str.substring(index + 1))
-            })
 
     internal inner class StoreReader : EventReader {
         override fun readAllForwards(after: Position): Stream<ResolvedEvent> {
@@ -76,6 +67,7 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
         }
 
         override val emptyStorePosition: Position = Empty
+        override val positionCodec: PositionCodec = FlatFilesystemEventSource.positionCodec
     }
 
     internal inner class CategoryReader : EventCategoryReader {
@@ -84,12 +76,14 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
         }
 
         override fun emptyCategoryPosition(category: String): Position = Empty
+        override val positionCodec: PositionCodec = FlatFilesystemEventSource.positionCodec
     }
 
     internal inner class StreamReader : EventStreamReader {
         override fun readStreamForwards(streamId: StreamId, after: Long): Stream<ResolvedEvent> {
             return storeReader.readAllForwards().filter { it.event.streamId == streamId && it.event.eventNumber > after }
         }
+        override val positionCodec: PositionCodec = FlatFilesystemEventSource.positionCodec
     }
 
     internal inner class StreamWriter : AbstractStreamWriter() {
@@ -142,6 +136,15 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
     private data class PackedFile(val packfile: String, override val filename: String): FilesystemPosition()
 
     companion object {
+        val positionCodec = positionCodecOfComparable(
+                { p -> p.toString() },
+                { str ->
+                    val index = str.indexOf('#')
+                    if (index < 0)
+                        LooseFile(str)
+                    else
+                        PackedFile(str.substring(0, index - 1), str.substring(index + 1))
+                })
         private val filenamePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z)\\.([^.]+)\\.([^.]+)\\.([0-9a-f]+)\\.([^.]+)\\.data\\.json")!!
         private val dateFormatter = DateTimeFormatterBuilder()
                 .append(DateTimeFormatter.ISO_LOCAL_DATE)

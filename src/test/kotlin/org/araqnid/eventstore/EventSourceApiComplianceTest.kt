@@ -51,7 +51,7 @@ abstract class EventSourceApiComplianceTest {
         val position1 = eventSource.streamReader.readStreamForwards(stream0).map { it.position }.onlyElement()!!
         val position2 = eventSource.streamReader.readStreamForwards(stream1).map { it.position }.onlyElement()!!
         assertThat(position1, not(equalTo(position2)))
-        assertTrue(eventSource.positionCodec.comparePositions(position1, position2) < 0)
+        assertTrue(eventSource.streamReader.positionCodec.comparePositions(position1, position2) < 0)
     }
 
     @Test fun write_events_specifying_expected_version_number() {
@@ -182,7 +182,7 @@ abstract class EventSourceApiComplianceTest {
         eventSource.streamWriter.write(stream2, listOf(eventC))
         eventSource.streamWriter.write(stream3, listOf(eventD))
 
-        val position = eventSource.storeReader.readAllForwards().limit(1).map { re -> re.position }.collectAndClose(Collectors.maxBy(eventSource.positionCodec::comparePositions)).get()
+        val position = eventSource.storeReader.readAllForwards().limit(1).map { re -> re.position }.collectAndClose(Collectors.maxBy(eventSource.storeReader.positionCodec::comparePositions)).get()
 
         assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).map { it.event }.toListAndClose(),
                 contains(eventRecord(stream3, 0, eventD)))
@@ -202,7 +202,7 @@ abstract class EventSourceApiComplianceTest {
         eventSource.streamWriter.write(stream2, listOf(eventC))
         eventSource.streamWriter.write(stream3, listOf(eventD))
 
-        val position = eventSource.storeReader.readAllForwards().map { re -> re.position }.collectAndClose(maxBy(eventSource.positionCodec::comparePositions)).get()
+        val position = eventSource.storeReader.readAllForwards().map { re -> re.position }.collectAndClose(maxBy(eventSource.storeReader.positionCodec::comparePositions)).get()
 
         assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).map { it.event }.toListAndClose(),
                 emptyIterable())

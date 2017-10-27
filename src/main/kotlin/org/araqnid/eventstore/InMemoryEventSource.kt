@@ -25,8 +25,7 @@ class InMemoryEventSource(val clock: Clock) : EventSource, EventReader, EventCat
     override val positionCodec: PositionCodec
         get() = codec
 
-    override val emptyStorePosition: Position
-        get() = InMemoryPosition(-1)
+    override val emptyStorePosition: Position = InMemoryPosition(-1)
 
     override fun emptyCategoryPosition(category: String): Position = emptyStorePosition
 
