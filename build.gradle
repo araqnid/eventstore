@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'org.jetbrains.kotlin.jvm'
 
 group = 'org.araqnid'
-version = "0.0.${System.getenv("BUILD_NUMBER") ?: 0}"
+version = System.getenv("BUILD_NUMBER") != null ? "0.0." + System.getenv("BUILD_NUMBER") : null
 
 jar {
     manifest {
