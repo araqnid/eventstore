@@ -6,7 +6,6 @@ import com.google.common.util.concurrent.MoreExecutors.shutdownAndAwaitTerminati
 import com.google.common.util.concurrent.Service
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.araqnid.eventstore.Position
-import org.araqnid.eventstore.PositionCodec
 import java.time.Clock
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
@@ -21,14 +20,13 @@ import java.util.function.Supplier
 
 class SnapshotEventSubscriptionService(val subscription: PollingEventSubscriptionService,
                                        val snapshotPersister: SnapshotPersister,
-                                       positionCodec: PositionCodec,
                                        clock: Clock,
                                        snapshotInterval: Duration) : AbstractService() {
     private val listeners = ListenerSet<SubscriptionListener>()
     private val emitter = listeners.proxy(SubscriptionListener::class.java)
     private val snapshotPersistenceExecutor = Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(snapshotPersister.javaClass.simpleName).build())
     private var writingSnapshot: CompletableFuture<Position>? = null
-    private val snapshotTrigger = SnapshotTrigger(positionCodec, snapshotInterval, snapshotInterval.dividedBy(4), snapshotInterval.multipliedBy(4), clock)
+    private val snapshotTrigger = SnapshotTrigger(subscription.eventReader.positionCodec, snapshotInterval, snapshotInterval.dividedBy(4), snapshotInterval.multipliedBy(4), clock)
 
     interface SubscriptionListener : PollingEventSubscriptionService.SubscriptionListener {
         fun noSnapshot() {}
