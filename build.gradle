@@ -2,14 +2,7 @@ apply plugin: 'java'
 apply plugin: 'org.jetbrains.kotlin.jvm'
 
 group = 'org.araqnid'
-version = new ByteArrayOutputStream().withStream { os ->
-    exec {
-        commandLine = ["git", "describe", "--always"]
-        standardOutput = os
-    }
-    def gitVersion = os.toString().trim()
-    gitVersion.matches("v(\\d+\\.\\d+\\.\\d+)") ? gitVersion.substring(1) : null
-}
+version = "git describe --tags".execute().text.trim().replaceFirst("^v", "").replace('-', '.')
 
 jar {
     manifest {
