@@ -5,15 +5,29 @@ import com.google.common.util.concurrent.Monitor
 import com.google.common.util.concurrent.MoreExecutors.directExecutor
 import com.google.common.util.concurrent.Service
 import junit.framework.AssertionFailedError
-import org.araqnid.eventstore.*
+import org.araqnid.eventstore.Blob
+import org.araqnid.eventstore.EventRecord
+import org.araqnid.eventstore.InMemoryEventSource
+import org.araqnid.eventstore.NewEvent
+import org.araqnid.eventstore.Position
+import org.araqnid.eventstore.ResolvedEvent
+import org.araqnid.eventstore.StreamId
+import org.araqnid.eventstore.TestPosition
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.*
+import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.equalTo
+import org.hamcrest.Matchers.sameInstance
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito
-import org.mockito.Mockito.*
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.doThrow
+import org.mockito.Mockito.inOrder
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
 import java.nio.charset.StandardCharsets.UTF_8
@@ -40,7 +54,7 @@ class SnapshotEventSubscriptionServiceTest {
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofSeconds(1))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
         snapshotEventSubscriptionService.addListener(awaitListener, directExecutor())
 
@@ -76,7 +90,7 @@ class SnapshotEventSubscriptionServiceTest {
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofSeconds(1))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
         snapshotEventSubscriptionService.addListener(awaitListener, directExecutor())
 
@@ -113,7 +127,7 @@ class SnapshotEventSubscriptionServiceTest {
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofSeconds(1))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
         snapshotEventSubscriptionService.addListener(serviceListener, directExecutor())
 
@@ -145,7 +159,7 @@ class SnapshotEventSubscriptionServiceTest {
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofSeconds(1))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
         snapshotEventSubscriptionService.addListener(awaitListener, directExecutor())
 
@@ -188,7 +202,7 @@ class SnapshotEventSubscriptionServiceTest {
         val lastPollPosition = AtomicReference(eventSource.storeReader.emptyStorePosition)
 
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofMillis(10L))
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofMillis(20L))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofMillis(20L))
         snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
         snapshotEventSubscriptionService.addListener(serviceListener, directExecutor())
         snapshotEventSubscriptionService.addListener(object : SnapshotEventSubscriptionService.SubscriptionListener {
@@ -280,7 +294,7 @@ class SnapshotEventSubscriptionServiceTest {
 
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofMillis(10L))
         subscription.addListener(subscriptionListener, directExecutor())
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofMillis(20L))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofMillis(20L))
         snapshotEventSubscriptionService.addListener(serviceListener, directExecutor())
 
         snapshotEventSubscriptionService.startAsync().awaitRunning()
@@ -307,7 +321,7 @@ class SnapshotEventSubscriptionServiceTest {
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofSeconds(1))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
         snapshotEventSubscriptionService.addListener(serviceListener, directExecutor())
 
@@ -338,7 +352,7 @@ class SnapshotEventSubscriptionServiceTest {
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofSeconds(1))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
         snapshotEventSubscriptionService.addListener(awaitListener, directExecutor())
 
@@ -378,7 +392,7 @@ class SnapshotEventSubscriptionServiceTest {
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofSeconds(1))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
         snapshotEventSubscriptionService.addListener(serviceListener, directExecutor())
 
@@ -422,7 +436,7 @@ class SnapshotEventSubscriptionServiceTest {
         }
 
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofMillis(10L))
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, eventSource.positionCodec, clock, Duration.ofMillis(20L))
+        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofMillis(20L))
         snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
         snapshotEventSubscriptionService.addListener(serviceListener, directExecutor())
 
