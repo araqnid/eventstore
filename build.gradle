@@ -64,7 +64,6 @@ publishing {
 
 ext {
     jacksonVersion = '2.8.7'
-    guiceVersion = '4.1.0'
     guavaVersion = '23.0'
 }
 
@@ -76,7 +75,6 @@ dependencies {
     compile "com.google.code.findbugs:jsr305:3.0.0"
     compile "org.tukaani:xz:1.5"
     compile "org.apache.commons:commons-compress:1.13"
-    compile "com.fasterxml.jackson.module:jackson-module-guice:$jacksonVersion"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-guava:$jacksonVersion"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"

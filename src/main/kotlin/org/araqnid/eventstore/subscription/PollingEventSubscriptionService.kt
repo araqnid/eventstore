@@ -10,9 +10,8 @@ import org.araqnid.eventstore.forEachOrderedAndClose
 import java.time.Duration
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
-class PollingEventSubscriptionService @Inject constructor(val eventReader: EventReader, val sink: Sink, val interval: Duration) : AbstractScheduledService() {
+class PollingEventSubscriptionService(val eventReader: EventReader, val sink: Sink, val interval: Duration) : AbstractScheduledService() {
     interface Sink {
         fun accept(event: ResolvedEvent)
     }
