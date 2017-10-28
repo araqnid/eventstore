@@ -23,8 +23,8 @@ abstract class EventSourceApiComplianceTest {
 
     @Test fun read_events_written_to_stream() {
         val streamId = StreamId("alpha", "1")
-        val eventA = NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))
-        val eventB = NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))
+        val eventA = NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))
+        val eventB = NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))
 
         eventSource.streamWriter.write(streamId, listOf(eventA, eventB))
 
@@ -36,8 +36,8 @@ abstract class EventSourceApiComplianceTest {
         val stream0 = StreamId("alpha", "1")
         val stream1 = StreamId("beta", "2")
 
-        val eventA = NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))
-        val eventB = NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))
+        val eventA = NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))
+        val eventB = NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))
 
         eventSource.streamWriter.write(stream0, listOf(eventA))
         eventSource.streamWriter.write(stream1, listOf(eventB))
@@ -56,34 +56,34 @@ abstract class EventSourceApiComplianceTest {
 
     @Test fun write_events_specifying_expected_version_number() {
         val streamId = StreamId("alpha", "1")
-        eventSource.streamWriter.write(streamId, listOf(NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))))
+        eventSource.streamWriter.write(streamId, listOf(NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))))
 
-        eventSource.streamWriter.write(streamId, 0, listOf(NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))))
+        eventSource.streamWriter.write(streamId, 0, listOf(NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))))
     }
 
     @Test fun write_events_specifying_expected_empty_version_number() {
-        eventSource.streamWriter.write(StreamId("alpha", "1"), emptyStreamEventNumber, listOf(NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))))
+        eventSource.streamWriter.write(StreamId("alpha", "1"), emptyStreamEventNumber, listOf(NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))))
     }
 
     @Test fun fails_if_expected_event_number_not_satisfied_yet() {
         thrown.expect(WrongExpectedVersionException::class.java)
-        eventSource.streamWriter.write(StreamId("alpha", "1"), 0, listOf(NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))))
+        eventSource.streamWriter.write(StreamId("alpha", "1"), 0, listOf(NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))))
     }
 
     @Test fun fails_if_expected_event_number_already_passed() {
         val streamId = StreamId("alpha", "1")
         eventSource.streamWriter.write(streamId, listOf(
-                NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata")),
-                NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))))
+                NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata")),
+                NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))))
 
         thrown.expect(WrongExpectedVersionException::class.java)
-        eventSource.streamWriter.write(streamId, 0, listOf(NewEvent("type-C", Blob.fromString("C-data"), Blob.fromString("C-metadata"))))
+        eventSource.streamWriter.write(streamId, 0, listOf(NewEvent("type-C", jsonBlob("C-data"), jsonBlob("C-metadata"))))
     }
 
     @Test fun read_stream_after_specific_event_number() {
         val streamId = StreamId("alpha", "1")
-        val eventA = NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))
-        val eventB = NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))
+        val eventA = NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))
+        val eventB = NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))
 
         eventSource.streamWriter.write(streamId, listOf(eventA, eventB))
 
@@ -93,8 +93,8 @@ abstract class EventSourceApiComplianceTest {
 
     @Test fun read_empty_after_end_of_stream() {
         val streamId = StreamId("alpha", "1")
-        val eventA = NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))
-        val eventB = NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))
+        val eventA = NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))
+        val eventB = NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))
         eventSource.streamWriter.write(streamId, listOf(eventA, eventB))
 
         assertThat(eventSource.streamReader.readStreamForwards(streamId, 1).map { it.event }.toListAndClose(),
@@ -102,9 +102,9 @@ abstract class EventSourceApiComplianceTest {
     }
 
     @Test fun read_all_events() {
-        val eventA = NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))
-        val eventB = NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))
-        val eventC = NewEvent("type-C", Blob.fromString("C-data"), Blob.fromString("C-metadata"))
+        val eventA = NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))
+        val eventB = NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))
+        val eventC = NewEvent("type-C", jsonBlob("C-data"), jsonBlob("C-metadata"))
         val stream0 = StreamId("alpha", "1")
         val stream1 = StreamId("beta", "2")
         val stream2 = StreamId("gamma", "3")
@@ -120,9 +120,9 @@ abstract class EventSourceApiComplianceTest {
         val stream0 = StreamId("alpha", "1")
         val stream1 = StreamId("beta", "2")
         val stream2 = StreamId("gamma", "3")
-        val eventA = NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))
-        val eventB = NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))
-        val eventC = NewEvent("type-C", Blob.fromString("C-data"), Blob.fromString("C-metadata"))
+        val eventA = NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))
+        val eventB = NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))
+        val eventC = NewEvent("type-C", jsonBlob("C-data"), jsonBlob("C-metadata"))
         eventSource.streamWriter.write(stream0, listOf(eventA))
         eventSource.streamWriter.write(stream1, listOf(eventB))
         eventSource.streamWriter.write(stream2, listOf(eventC))
@@ -137,9 +137,9 @@ abstract class EventSourceApiComplianceTest {
         val stream0 = StreamId("alpha", "1")
         val stream1 = StreamId("beta", "2")
         val stream2 = StreamId("gamma", "3")
-        val eventA = NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))
-        val eventB = NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))
-        val eventC = NewEvent("type-C", Blob.fromString("C-data"), Blob.fromString("C-metadata"))
+        val eventA = NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))
+        val eventB = NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))
+        val eventC = NewEvent("type-C", jsonBlob("C-data"), jsonBlob("C-metadata"))
         eventSource.streamWriter.write(stream0, listOf(eventA))
         eventSource.streamWriter.write(stream1, listOf(eventB))
         eventSource.streamWriter.write(stream2, listOf(eventC))
@@ -155,10 +155,10 @@ abstract class EventSourceApiComplianceTest {
         val stream1 = StreamId("beta", "1")
         val stream2 = StreamId("gamma", "1")
         val stream3 = StreamId("alpha", "2")
-        val eventA = NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))
-        val eventB = NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))
-        val eventC = NewEvent("type-C", Blob.fromString("C-data"), Blob.fromString("C-metadata"))
-        val eventD = NewEvent("type-D", Blob.fromString("D-data"), Blob.fromString("D-metadata"))
+        val eventA = NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))
+        val eventB = NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))
+        val eventC = NewEvent("type-C", jsonBlob("C-data"), jsonBlob("C-metadata"))
+        val eventD = NewEvent("type-D", jsonBlob("D-data"), jsonBlob("D-metadata"))
         eventSource.streamWriter.write(stream0, listOf(eventA))
         eventSource.streamWriter.write(stream1, listOf(eventB))
         eventSource.streamWriter.write(stream2, listOf(eventC))
@@ -173,10 +173,10 @@ abstract class EventSourceApiComplianceTest {
         val stream1 = StreamId("beta", "1")
         val stream2 = StreamId("gamma", "1")
         val stream3 = StreamId("alpha", "2")
-        val eventA = NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))
-        val eventB = NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))
-        val eventC = NewEvent("type-C", Blob.fromString("C-data"), Blob.fromString("C-metadata"))
-        val eventD = NewEvent("type-D", Blob.fromString("D-data"), Blob.fromString("D-metadata"))
+        val eventA = NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))
+        val eventB = NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))
+        val eventC = NewEvent("type-C", jsonBlob("C-data"), jsonBlob("C-metadata"))
+        val eventD = NewEvent("type-D", jsonBlob("D-data"), jsonBlob("D-metadata"))
         eventSource.streamWriter.write(stream0, listOf(eventA))
         eventSource.streamWriter.write(stream1, listOf(eventB))
         eventSource.streamWriter.write(stream2, listOf(eventC))
@@ -193,10 +193,10 @@ abstract class EventSourceApiComplianceTest {
         val stream1 = StreamId("beta", "1")
         val stream2 = StreamId("gamma", "1")
         val stream3 = StreamId("alpha", "2")
-        val eventA = NewEvent("type-A", Blob.fromString("A-data"), Blob.fromString("A-metadata"))
-        val eventB = NewEvent("type-B", Blob.fromString("B-data"), Blob.fromString("B-metadata"))
-        val eventC = NewEvent("type-C", Blob.fromString("C-data"), Blob.fromString("C-metadata"))
-        val eventD = NewEvent("type-D", Blob.fromString("D-data"), Blob.fromString("D-metadata"))
+        val eventA = NewEvent("type-A", jsonBlob("A-data"), jsonBlob("A-metadata"))
+        val eventB = NewEvent("type-B", jsonBlob("B-data"), jsonBlob("B-metadata"))
+        val eventC = NewEvent("type-C", jsonBlob("C-data"), jsonBlob("C-metadata"))
+        val eventD = NewEvent("type-D", jsonBlob("D-data"), jsonBlob("D-metadata"))
         eventSource.streamWriter.write(stream0, listOf(eventA))
         eventSource.streamWriter.write(stream1, listOf(eventB))
         eventSource.streamWriter.write(stream2, listOf(eventC))
@@ -208,6 +208,8 @@ abstract class EventSourceApiComplianceTest {
                 emptyIterable())
     }
 }
+
+private fun jsonBlob(data: String) = Blob.fromString("{\"data\":\"$data\"}")
 
 private fun eventRecord(streamId: StreamId, eventNumber: Long, asCreated: NewEvent) = eventRecord(streamId, eventNumber, asCreated.type, asCreated.data, asCreated.metadata)
 
