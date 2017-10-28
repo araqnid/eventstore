@@ -16,12 +16,12 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 
-class FilesystemEventSourceTest : EventSourceApiComplianceTest() {
+class TieredFilesystemEventSourceTest : EventSourceApiComplianceTest() {
     @Rule @JvmField val temporaryFolder = TemporaryFolder()
 
     var clock: Clock = Clock.systemDefaultZone()
 
-    override val eventSource: EventSource by lazy { FilesystemEventSource(temporaryFolder.root.toPath(), clock) }
+    override val eventSource: EventSource by lazy { TieredFilesystemEventSource(temporaryFolder.root.toPath(), clock) }
 
     @Test fun filenames_encoded_for_lexical_ordering() {
         // timestamps have fixed precision

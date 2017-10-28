@@ -33,7 +33,7 @@ import java.util.Comparator.comparing
 import java.util.regex.Pattern
 import java.util.stream.Stream
 
-class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSource {
+class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSource {
     override val storeReader: EventReader = StoreReader()
     override val categoryReader: EventCategoryReader = CategoryReader()
     override val streamReader: EventStreamReader = StreamReader()
@@ -50,7 +50,7 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
                     .filter { it.event.eventNumber > after }
         }
 
-        override val positionCodec = FilesystemEventSource.positionCodec
+        override val positionCodec = TieredFilesystemEventSource.positionCodec
     }
 
     internal inner class StoreReader : EventReader {
@@ -66,9 +66,9 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
                     .filterNotNull()
         }
 
-        override val emptyStorePosition: Position = FilesystemEventSource.emptyStorePosition
+        override val emptyStorePosition: Position = TieredFilesystemEventSource.emptyStorePosition
 
-        override val positionCodec = FilesystemEventSource.positionCodec
+        override val positionCodec = TieredFilesystemEventSource.positionCodec
     }
 
     internal inner class CategoryReader : EventCategoryReader {
@@ -84,9 +84,9 @@ class FilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSo
                     .filterNotNull()
         }
 
-        override fun emptyCategoryPosition(category: String): Position = FilesystemEventSource.emptyStorePosition
+        override fun emptyCategoryPosition(category: String): Position = TieredFilesystemEventSource.emptyStorePosition
 
-        override val positionCodec = FilesystemEventSource.positionCodec
+        override val positionCodec = TieredFilesystemEventSource.positionCodec
     }
 
     internal inner class StreamWriter : AbstractStreamWriter() {
