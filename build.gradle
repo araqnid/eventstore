@@ -30,7 +30,6 @@ allprojects {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
         kotlinOptions {
             jvmTarget = "1.8"
-            freeCompilerArgs = ["-Xjsr305=strict"]
         }
     }
 }
@@ -86,7 +85,7 @@ dependencies {
 }
 
 buildscript {
-    ext.kotlinVersion = '1.1.51'
+    ext.kotlinVersion = '1.1.61'
 
     repositories {
         mavenCentral()
