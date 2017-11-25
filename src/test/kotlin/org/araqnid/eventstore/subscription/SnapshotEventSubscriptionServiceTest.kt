@@ -23,13 +23,13 @@ import org.junit.Test
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.inOrder
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
+import java.lang.AssertionError
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Clock
 import java.time.Duration
@@ -49,28 +49,28 @@ class SnapshotEventSubscriptionServiceTest {
         val subscriptionListener = mock<SnapshotEventSubscriptionService.SubscriptionListener>()
         val snapshotPersister = mock<SnapshotPersister>()
         val serviceListener = mock<Service.Listener>()
-        val awaitListener = AwaitListener(serviceListener)
+        val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
-        snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
-        snapshotEventSubscriptionService.addListener(awaitListener, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.serviceListenerProxy, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.subscriptionListenerProxy, directExecutor())
 
         `when`(snapshotPersister.load()).thenReturn(null)
         snapshotEventSubscriptionService.startAsync().awaitRunning()
 
-        awaitListener.await("running")
+        awaitListener.await("initialReplayComplete")
 
         val inOrder = inOrder(snapshotPersister, subscriptionListener, serviceListener, sink)
         inOrder.verify(subscriptionListener).loadingSnapshot()
         inOrder.verify(snapshotPersister).load()
         inOrder.verify(subscriptionListener).noSnapshot()
+        inOrder.verify(serviceListener).running()
         inOrder.verify(subscriptionListener).pollStarted(eventSource.storeReader.emptyStorePosition)
         inOrder.verify(subscriptionListener).pollFinished(eventSource.storeReader.emptyStorePosition, 0)
         inOrder.verify(subscriptionListener).initialReplayComplete(eventSource.storeReader.emptyStorePosition)
-        inOrder.verify(serviceListener).running()
 
         verify(snapshotPersister, never()).save()
         verify(subscriptionListener, never()).writingSnapshot()
@@ -85,14 +85,14 @@ class SnapshotEventSubscriptionServiceTest {
         val subscriptionListener = mock<SnapshotEventSubscriptionService.SubscriptionListener>()
         val snapshotPersister = mock<SnapshotPersister>()
         val serviceListener = mock<Service.Listener>()
-        val awaitListener = AwaitListener(serviceListener)
+        val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
-        snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
-        snapshotEventSubscriptionService.addListener(awaitListener, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.serviceListenerProxy, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.subscriptionListenerProxy, directExecutor())
 
         val event1 = writeEvent(eventSource)
 
@@ -106,13 +106,13 @@ class SnapshotEventSubscriptionServiceTest {
         inOrder.verify(subscriptionListener).loadingSnapshot()
         inOrder.verify(snapshotPersister).load()
         inOrder.verify(subscriptionListener).noSnapshot()
+        inOrder.verify(serviceListener).running()
         inOrder.verify(subscriptionListener).pollStarted(eventSource.storeReader.emptyStorePosition)
         inOrder.verify(sink).accept(event1)
         inOrder.verify(subscriptionListener).pollFinished(event1.position, 1)
         inOrder.verify(snapshotPersister).save()
         inOrder.verify(subscriptionListener).wroteSnapshot(event1.position)
         inOrder.verify(subscriptionListener).initialReplayComplete(event1.position)
-        inOrder.verify(serviceListener).running()
 
         snapshotEventSubscriptionService.stopAsync().awaitTerminated()
         assertThat(subscription.state(), equalTo(Service.State.TERMINATED))
@@ -140,10 +140,10 @@ class SnapshotEventSubscriptionServiceTest {
         inOrder.verify(subscriptionListener).loadingSnapshot()
         inOrder.verify(snapshotPersister).load()
         inOrder.verify(subscriptionListener).loadedSnapshot(event1.position)
+        inOrder.verify(serviceListener).running()
         inOrder.verify(subscriptionListener).pollStarted(event1.position)
         inOrder.verify(subscriptionListener).pollFinished(event1.position, 0)
         inOrder.verify(subscriptionListener).initialReplayComplete(event1.position)
-        inOrder.verify(serviceListener).running()
 
         snapshotEventSubscriptionService.stopAsync().awaitTerminated()
         assertThat(subscription.state(), equalTo(Service.State.TERMINATED))
@@ -154,14 +154,14 @@ class SnapshotEventSubscriptionServiceTest {
         val subscriptionListener = mock<SnapshotEventSubscriptionService.SubscriptionListener>()
         val snapshotPersister = mock<SnapshotPersister>()
         val serviceListener = mock<Service.Listener>()
-        val awaitListener = AwaitListener(serviceListener)
+        val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
-        snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
-        snapshotEventSubscriptionService.addListener(awaitListener, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.serviceListenerProxy, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.subscriptionListenerProxy, directExecutor())
 
         val event1 = writeEvent(eventSource)
         val event2 = writeEvent(eventSource)
@@ -170,12 +170,13 @@ class SnapshotEventSubscriptionServiceTest {
         `when`(snapshotPersister.save()).thenReturn(event2.position)
         snapshotEventSubscriptionService.startAsync().awaitRunning()
 
-        awaitListener.await("running")
+        awaitListener.await("initialReplayComplete")
 
         val inOrder = inOrder(snapshotPersister, subscriptionListener, serviceListener, sink)
         inOrder.verify(subscriptionListener).loadingSnapshot()
         inOrder.verify(snapshotPersister).load()
         inOrder.verify(subscriptionListener).loadedSnapshot(event1.position)
+        inOrder.verify(serviceListener).running()
         inOrder.verify(subscriptionListener).pollStarted(event1.position)
         inOrder.verify(sink).accept(event2)
         inOrder.verify(subscriptionListener).pollFinished(event2.position, 1)
@@ -183,7 +184,6 @@ class SnapshotEventSubscriptionServiceTest {
         inOrder.verify(snapshotPersister).save()
         inOrder.verify(subscriptionListener).wroteSnapshot(event2.position)
         inOrder.verify(subscriptionListener).initialReplayComplete(event2.position)
-        inOrder.verify(serviceListener).running()
 
         snapshotEventSubscriptionService.stopAsync().awaitTerminated()
         assertThat(subscription.state(), equalTo(Service.State.TERMINATED))
@@ -194,6 +194,7 @@ class SnapshotEventSubscriptionServiceTest {
         val subscriptionListener = mock<SnapshotEventSubscriptionService.SubscriptionListener>()
         val snapshotPersister = mock<SnapshotPersister>()
         val serviceListener = mock<Service.Listener>()
+        val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
@@ -203,8 +204,8 @@ class SnapshotEventSubscriptionServiceTest {
 
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofMillis(10L))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofMillis(20L))
-        snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
-        snapshotEventSubscriptionService.addListener(serviceListener, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.subscriptionListenerProxy, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.serviceListenerProxy, directExecutor())
         snapshotEventSubscriptionService.addListener(object : SnapshotEventSubscriptionService.SubscriptionListener {
             override fun pollFinished(position: Position, eventsRead: Int) {
                 lastPollPosition.set(position)
@@ -230,6 +231,8 @@ class SnapshotEventSubscriptionServiceTest {
 
         snapshotEventSubscriptionService.startAsync().awaitRunning()
 
+        awaitListener.await("initialReplayComplete")
+
         val event1 = writeEvent(eventSource)
         if (!snapshotWrites.tryAcquire(1, TimeUnit.SECONDS))
             fail("Timed out waiting for snapshot to be written")
@@ -238,10 +241,10 @@ class SnapshotEventSubscriptionServiceTest {
         inOrder.verify(subscriptionListener).loadingSnapshot()
         inOrder.verify(snapshotPersister).load()
         inOrder.verify(subscriptionListener).noSnapshot()
+        inOrder.verify(serviceListener).running()
         inOrder.verify(subscriptionListener).pollStarted(eventSource.storeReader.emptyStorePosition)
         inOrder.verify(subscriptionListener).pollFinished(eventSource.storeReader.emptyStorePosition, 0)
         inOrder.verify(subscriptionListener).initialReplayComplete(eventSource.storeReader.emptyStorePosition)
-        inOrder.verify(serviceListener).running()
         inOrder.verify(subscriptionListener).writingSnapshot()
         inOrder.verify(snapshotPersister).save()
         inOrder.verify(subscriptionListener).wroteSnapshot(event1.position)
@@ -342,28 +345,29 @@ class SnapshotEventSubscriptionServiceTest {
         assertThat(subscription.state(), equalTo(Service.State.NEW))
     }
 
-    @Test fun service_fails_during_starting_and_stops_subscription_if_snapshot_writer_throws_runtime_exception() {
+    @Test fun service_fails_and_stops_subscription_if_snapshot_writer_throws_runtime_exception() {
         val sink = mock<PollingEventSubscriptionService.Sink>()
         val subscriptionListener = mock<SnapshotEventSubscriptionService.SubscriptionListener>()
         val snapshotPersister = mock<SnapshotPersister>()
         val serviceListener = mock<Service.Listener>()
-        val awaitListener = AwaitListener(serviceListener)
+        val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
-        snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
-        snapshotEventSubscriptionService.addListener(awaitListener, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.serviceListenerProxy, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.subscriptionListenerProxy, directExecutor())
 
         val event1 = writeEvent(eventSource)
 
         `when`(snapshotPersister.load()).thenReturn(null)
         `when`(snapshotPersister.save()).thenThrow(RuntimeException())
+        snapshotEventSubscriptionService.startAsync()
         try {
-            snapshotEventSubscriptionService.startAsync().awaitRunning()
+            awaitListener.await("initialReplayComplete")
             fail()
-        } catch (e: IllegalStateException) {
+        } catch (e: AssertionError) {
             // as expected
         }
 
@@ -373,50 +377,15 @@ class SnapshotEventSubscriptionServiceTest {
         inOrder.verify(subscriptionListener).loadingSnapshot()
         inOrder.verify(snapshotPersister).load()
         inOrder.verify(subscriptionListener).noSnapshot()
+        inOrder.verify(serviceListener).running()
         inOrder.verify(subscriptionListener).pollStarted(eventSource.storeReader.emptyStorePosition)
         inOrder.verify(sink).accept(event1)
         inOrder.verify(subscriptionListener).pollFinished(event1.position, 1)
         inOrder.verify(subscriptionListener).writingSnapshot()
         inOrder.verify(snapshotPersister).save()
-        inOrder.verify(serviceListener).failed(eq(Service.State.STARTING), anyThrowable())
+        inOrder.verify(serviceListener).failed(eq(Service.State.RUNNING), anyThrowable())
 
         assertThat(subscription.state(), equalTo(Service.State.TERMINATED))
-    }
-
-    @Test fun service_fails_if_subscription_fails_during_startup() {
-        val sink = mock<PollingEventSubscriptionService.Sink>()
-        val subscriptionListener = mock<SnapshotEventSubscriptionService.SubscriptionListener>()
-        val snapshotPersister = mock<SnapshotPersister>()
-        val serviceListener = mock<Service.Listener>()
-
-        val clock = Clock.systemUTC()
-        val eventSource = InMemoryEventSource(clock)
-        val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
-        val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
-        snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
-        snapshotEventSubscriptionService.addListener(serviceListener, directExecutor())
-
-        val event1 = writeEvent(eventSource)
-        val deliveryException = RuntimeException()
-
-        `when`(snapshotPersister.load()).thenReturn(null)
-        doThrow(deliveryException).`when`(sink).accept(anyResolvedEvent())
-
-        val expectedFailure = attemptStartExpectingFailure(snapshotEventSubscriptionService)
-
-        assertThat(expectedFailure.cause, sameInstance<Throwable>(deliveryException))
-
-        val inOrder = inOrder(snapshotPersister, subscriptionListener, serviceListener, sink)
-        inOrder.verify(subscriptionListener).loadingSnapshot()
-        inOrder.verify(snapshotPersister).load()
-        inOrder.verify(subscriptionListener).noSnapshot()
-        inOrder.verify(subscriptionListener).pollStarted(eventSource.storeReader.emptyStorePosition)
-        inOrder.verify(sink).accept(event1)
-
-        verifyNoMoreInteractions(snapshotPersister)
-
-        assertThat(snapshotEventSubscriptionService.state(), equalTo(Service.State.FAILED))
-        assertThat(subscription.state(), equalTo(Service.State.FAILED))
     }
 
     @Test fun service_fails_if_subscription_fails_when_running() {
@@ -516,30 +485,74 @@ class SnapshotEventSubscriptionServiceTest {
         return ResolvedEvent(TestPosition(0), EventRecord(StreamId("",""), 0L, Instant.EPOCH, "", Blob.empty, Blob.empty))
     }
 
-    private class AwaitListener(private val serviceListener: Service.Listener) : Service.Listener() {
-        override fun running() {
-            serviceListener.running()
-            called("running")
+    private class AwaitListener(private val serviceListener: Service.Listener, private val subscriptionListener: SnapshotEventSubscriptionService.SubscriptionListener) {
+        val serviceListenerProxy = object : Service.Listener() {
+            override fun running() {
+                serviceListener.running()
+                called("running")
+            }
+
+            override fun stopping(from: Service.State) {
+                serviceListener.stopping(from)
+                called("stopping")
+            }
+
+            override fun failed(from: Service.State, failure: Throwable) {
+                serviceListener.failed(from, failure)
+                called("failed")
+            }
+
+            override fun terminated(from: Service.State) {
+                serviceListener.terminated(from)
+                called("terminated")
+            }
+
+            override fun starting() {
+                serviceListener.starting()
+                called("starting")
+            }
         }
 
-        override fun stopping(from: Service.State) {
-            serviceListener.stopping(from)
-            called("stopping")
-        }
+        val subscriptionListenerProxy = object : SnapshotEventSubscriptionService.SubscriptionListener {
+            override fun noSnapshot() {
+                subscriptionListener.noSnapshot()
+                called("noSnapshot")
+            }
 
-        override fun failed(from: Service.State, failure: Throwable) {
-            serviceListener.failed(from, failure)
-            called("failed")
-        }
+            override fun loadingSnapshot() {
+                subscriptionListener.loadingSnapshot()
+                called("loadingSnapshot")
+            }
 
-        override fun terminated(from: Service.State) {
-            serviceListener.terminated(from)
-            called("terminated")
-        }
+            override fun loadedSnapshot(position: Position) {
+                subscriptionListener.loadedSnapshot(position)
+                called("loadedSnapshot")
+            }
 
-        override fun starting() {
-            serviceListener.starting()
-            called("starting")
+            override fun writingSnapshot() {
+                subscriptionListener.writingSnapshot()
+                called("writingSnapshot")
+            }
+
+            override fun wroteSnapshot(position: Position) {
+                subscriptionListener.wroteSnapshot(position)
+                called("wroteSnapshot")
+            }
+
+            override fun initialReplayComplete(position: Position) {
+                subscriptionListener.initialReplayComplete(position)
+                called("initialReplayComplete")
+            }
+
+            override fun pollStarted(position: Position) {
+                subscriptionListener.pollStarted(position)
+                called("pollStarted")
+            }
+
+            override fun pollFinished(position: Position, eventsRead: Int) {
+                subscriptionListener.pollFinished(position, eventsRead)
+                called("pollFinished")
+            }
         }
 
         private val monitor = Monitor()
@@ -548,6 +561,7 @@ class SnapshotEventSubscriptionServiceTest {
         private fun called(methodName: String) {
             monitor.enter()
             try {
+                println("listener method called: $methodName")
                 methodsCalled.add(methodName)
             } finally {
                 monitor.leave()
