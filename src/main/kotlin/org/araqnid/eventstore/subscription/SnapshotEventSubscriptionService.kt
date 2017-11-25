@@ -61,6 +61,7 @@ class SnapshotEventSubscriptionService(val subscription: PollingEventSubscriptio
                     subscription.addListener(PropagateSubscriptionNotifications(), directExecutor())
                     subscription.addListener(ConsiderWritingSnapshotAfterPolling(), directExecutor())
                     subscription.startAsync()
+                    notifyStarted()
                 }
                 .propagateExceptionAsServiceFailure()
     }
@@ -143,19 +144,18 @@ class SnapshotEventSubscriptionService(val subscription: PollingEventSubscriptio
     private fun writeSnapshotStop(): CompletableFuture<*> = writingSnapshot ?: completedFuture(null)
 
     inner class ConsiderWritingSnapshotAfterPolling : PollingEventSubscriptionService.SubscriptionListener {
-        private val doneNotifyStarted = AtomicBoolean()
+        private val doneInitialReplayNotification = AtomicBoolean()
 
         override fun pollFinished(position: Position, eventsRead: Int) {
             if (eventsRead > 0)
                 snapshotTrigger.eventReceived(position)
-            val doneNotify = doneNotifyStarted.getAndSet(true)
+            val doneNotify = doneInitialReplayNotification.getAndSet(true)
             if (doneNotify) {
                 maybeWriteSnapshot(false)
             }
             else {
                 maybeWriteSnapshot(true).thenRun {
                     listeners.emit { it.initialReplayComplete(position) }
-                    notifyStarted()
                 }
             }
         }
