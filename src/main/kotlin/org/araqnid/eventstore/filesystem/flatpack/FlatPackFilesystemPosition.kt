@@ -31,7 +31,7 @@ val codec = positionCodecOfComparable<FlatPackFilesystemPosition>(
             }
         },
         { stored ->
-            val parts = stored.split(delimiters = "#", limit = 2)
+            val parts = stored.split("#", limit = 2)
             if (parts.size == 2) {
                 PackedFile(parts[0], parts[1])
             }

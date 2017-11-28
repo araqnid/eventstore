@@ -136,7 +136,7 @@ class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Cl
                         private var eventNumber: Long? = null
 
                         override fun processLine(line: String): Boolean {
-                            val(category, id, eventNumberString) = line.split(delimiters = " ")
+                            val(category, id, eventNumberString) = line.split(" ")
                             return if (category == streamId.category && id == streamId.id) {
                                 eventNumber = eventNumberString.toLong()
                                 false
