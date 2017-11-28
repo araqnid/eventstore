@@ -63,7 +63,7 @@ publishing {
 
 ext {
     jacksonVersion = '2.8.7'
-    guavaVersion = '23.0'
+    guavaVersion = '23.5-jre'
 }
 
 dependencies {
