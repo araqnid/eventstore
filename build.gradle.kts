@@ -1,10 +1,24 @@
+import java.io.ByteArrayOutputStream
+
 plugins {
     kotlin("jvm") version "1.2.0"
     `maven-publish`
 }
 
+fun versionFromGit(): String {
+    val capture = ByteArrayOutputStream()
+    project.exec {
+        commandLine("git", "describe", "--tags")
+        standardOutput = capture
+    }
+    return String(capture.toByteArray())
+            .trim()
+            .removePrefix("v")
+            .replace('-', '.')
+}
+
 group = "org.araqnid"
-//version = "git describe --tags".execute().text.trim().replaceFirst("^v", "").replace('-', '.')
+version = versionFromGit()
 
 val guavaVersion by extra { "23.5-jre" }
 val jacksonVersion by extra { "2.8.7" }
