@@ -1,12 +1,7 @@
 package org.araqnid.eventstore.subscription
 
 import com.google.common.util.concurrent.Monitor
-import org.araqnid.eventstore.Blob
-import org.araqnid.eventstore.EventRecord
-import org.araqnid.eventstore.InMemoryEventSource
-import org.araqnid.eventstore.NewEvent
-import org.araqnid.eventstore.ResolvedEvent
-import org.araqnid.eventstore.StreamId
+import org.araqnid.eventstore.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.Assert.fail
@@ -31,7 +26,7 @@ class FlowTest {
         val publisher = EventStorePublisher(eventSource, Duration.ofMillis(10L))
         publisher.subscribe(subscriber)
 
-        subscriber.awaitReceived(1, Duration.ofSeconds(1))
+        subscriber.awaitReceived(2, Duration.ofSeconds(1))
         assertThat(subscriber.received.map { it.event }, equalTo(listOf(
                 EventRecord(StreamId("test", "1"), 0L, Instant.EPOCH, "Test", Blob.empty, Blob.empty),
                 EventRecord(StreamId("test2", "2"), 0L, Instant.EPOCH, "Test", Blob.empty, Blob.empty))))
