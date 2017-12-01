@@ -100,7 +100,7 @@ class SnapshotEventSubscriptionServiceTest {
         `when`(snapshotPersister.save()).thenReturn(event1.position)
         snapshotEventSubscriptionService.startAsync().awaitRunning()
 
-        awaitListener.await("running")
+        awaitListener.await("initialReplayComplete")
 
         val inOrder = inOrder(snapshotPersister, subscriptionListener, serviceListener, sink)
         inOrder.verify(subscriptionListener).loadingSnapshot()
@@ -123,18 +123,21 @@ class SnapshotEventSubscriptionServiceTest {
         val subscriptionListener = mock<SnapshotEventSubscriptionService.SubscriptionListener>()
         val snapshotPersister = mock<SnapshotPersister>()
         val serviceListener = mock<Service.Listener>()
+        val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
         val clock = Clock.systemUTC()
         val eventSource = InMemoryEventSource(clock)
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
-        snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
-        snapshotEventSubscriptionService.addListener(serviceListener, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.subscriptionListenerProxy, directExecutor())
+        snapshotEventSubscriptionService.addListener(awaitListener.serviceListenerProxy, directExecutor())
 
         val event1 = writeEvent(eventSource)
 
         `when`(snapshotPersister.load()).thenReturn(event1.position)
         snapshotEventSubscriptionService.startAsync().awaitRunning()
+
+        awaitListener.await("initialReplayComplete")
 
         val inOrder = inOrder(snapshotPersister, subscriptionListener, serviceListener, sink)
         inOrder.verify(subscriptionListener).loadingSnapshot()
