@@ -62,7 +62,7 @@ class FlowTest {
         fun awaitReceived(count: Long, duration: Duration) {
             if (!monitor.enterWhen(object : Monitor.Guard(monitor) {
                     override fun isSatisfied(): Boolean {
-                        return error != null || received.size >= count;
+                        return error != null || received.size >= count
                     }
                 }, duration.toNanos(), TimeUnit.NANOSECONDS)) {
                 fail("Did not reach $count entries received within $duration")
@@ -93,7 +93,7 @@ class FlowTest {
         fun awaitCompleted(duration: Duration) {
             if (!monitor.enterWhen(object : Monitor.Guard(monitor) {
                 override fun isSatisfied(): Boolean {
-                    return error != null || completed;
+                    return error != null || completed
                 }
             }, duration.toNanos(), TimeUnit.NANOSECONDS)) {
                 fail("Did not complete within $duration")
