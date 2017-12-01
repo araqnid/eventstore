@@ -5,7 +5,8 @@ plugins {
     `maven-publish`
 }
 
-fun versionFromGit(): String {
+group = "org.araqnid"
+version = (fun (): String {
     val capture = ByteArrayOutputStream()
     project.exec {
         commandLine("git", "describe", "--tags")
@@ -15,10 +16,7 @@ fun versionFromGit(): String {
             .trim()
             .removePrefix("v")
             .replace('-', '.')
-}
-
-group = "org.araqnid"
-version = versionFromGit()
+})()
 
 val guavaVersion by extra { "23.5-jre" }
 val jacksonVersion by extra { "2.8.7" }
