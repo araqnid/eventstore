@@ -83,7 +83,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
     implementation("com.google.code.findbugs:jsr305:3.0.0")
-    testCompile("junit:junit:4.12")
+    testCompile(kotlin("test-junit"))
     testCompile("org.hamcrest:hamcrest-library:1.3")
     testCompile("org.mockito:mockito-core:2.7.21")
     testCompile("com.timgroup:clocks-testing:1.0.1070")
