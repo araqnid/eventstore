@@ -18,12 +18,13 @@ version = (fun (): String {
             .replace('-', '.')
 })()
 
-val guavaVersion by extra { "23.5-jre" }
-val jacksonVersion by extra { "2.8.7" }
+val guavaVersion by extra("23.5-jre")
+val jacksonVersion by extra("2.8.7")
 
 tasks {
     withType<JavaCompile> {
-        sourceCompatibility = "1.9"
+        sourceCompatibility = "1.8"
+        sourceCompatibility = "1.8"
         options.encoding = "UTF-8"
         options.compilerArgs.add("-parameters")
         options.isIncremental = true
