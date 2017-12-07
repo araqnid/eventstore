@@ -5,18 +5,20 @@ plugins {
     `maven-publish`
 }
 
-group = "org.araqnid"
-version = (fun (): String {
+val gitVersion by extra {
     val capture = ByteArrayOutputStream()
     project.exec {
         commandLine("git", "describe", "--tags")
         standardOutput = capture
     }
-    return String(capture.toByteArray())
+    String(capture.toByteArray())
             .trim()
             .removePrefix("v")
             .replace('-', '.')
-})()
+}
+
+group = "org.araqnid"
+version = gitVersion
 
 val guavaVersion by extra("23.5-jre")
 val jacksonVersion by extra("2.8.7")
