@@ -87,7 +87,6 @@ dependencies {
     implementation(kotlin("reflect", "1.2.0"))
     implementation("com.google.code.findbugs:jsr305:3.0.0")
     testCompile(kotlin("test-junit", "1.2.0"))
-    testCompile("org.hamcrest:hamcrest-library:1.3")
     testCompile("org.mockito:mockito-core:2.7.21")
     testCompile("com.timgroup:clocks-testing:1.0.1070")
     testCompile("com.natpryce:hamkrest:1.4.2.2")
