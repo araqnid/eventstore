@@ -4,6 +4,12 @@ import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Monitor
 import com.google.common.util.concurrent.MoreExecutors.directExecutor
 import com.google.common.util.concurrent.Service
+import com.natpryce.hamkrest.assertion.assertThat
+import com.natpryce.hamkrest.cast
+import com.natpryce.hamkrest.containsSubstring
+import com.natpryce.hamkrest.equalTo
+import com.natpryce.hamkrest.present
+import com.natpryce.hamkrest.sameInstance
 import junit.framework.AssertionFailedError
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventRecord
@@ -13,10 +19,6 @@ import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.TestPosition
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.containsString
-import org.hamcrest.Matchers.equalTo
-import org.hamcrest.Matchers.sameInstance
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
@@ -335,7 +337,7 @@ class SnapshotEventSubscriptionServiceTest {
         `when`(snapshotPersister.load()).thenThrow(snapshotFailure)
         val expectedFailure = attemptStartExpectingFailure(snapshotEventSubscriptionService)
 
-        assertThat(expectedFailure.cause, sameInstance<Throwable>(snapshotFailure))
+        assertThat(expectedFailure.cause, present(cast(sameInstance(snapshotFailure))))
         val inOrder = inOrder(snapshotPersister, subscriptionListener, serviceListener, sink)
         inOrder.verify(subscriptionListener).loadingSnapshot()
         inOrder.verify(snapshotPersister).load()
@@ -427,7 +429,7 @@ class SnapshotEventSubscriptionServiceTest {
         }
 
         assertThat(snapshotEventSubscriptionService.state(), equalTo(Service.State.FAILED))
-        assertThat(snapshotEventSubscriptionService.failureCause().message, containsString(event1.position.toString()))
+        assertThat(snapshotEventSubscriptionService.failureCause().message, present(containsSubstring(event1.position.toString())))
         assertThat(snapshotEventSubscriptionService.failureCause().cause?.message, equalTo("error from sink"))
         assertThat(subscription.state(), equalTo(Service.State.FAILED))
     }

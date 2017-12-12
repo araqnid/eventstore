@@ -71,7 +71,7 @@ publishing {
 
 repositories {
     mavenCentral()
-    maven(url = "https://repo.araqnid.org/maven/")
+    maven(url = "https://dl.bintray.com/araqnid/maven")
 }
 
 dependencies {
@@ -90,4 +90,6 @@ dependencies {
     testCompile("org.hamcrest:hamcrest-library:1.3")
     testCompile("org.mockito:mockito-core:2.7.21")
     testCompile("com.timgroup:clocks-testing:1.0.1070")
+    testCompile("com.natpryce:hamkrest:1.4.2.2")
+    testCompile("org.araqnid:hamkrest-json:1.0.3")
 }

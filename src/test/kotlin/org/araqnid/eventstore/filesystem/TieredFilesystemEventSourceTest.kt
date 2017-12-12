@@ -1,13 +1,13 @@
 package org.araqnid.eventstore.filesystem
 
+import com.natpryce.hamkrest.assertion.assertThat
+import com.natpryce.hamkrest.hasElement
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventSource
 import org.araqnid.eventstore.EventSourceApiComplianceTest
 import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.toListAndClose
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.hasItem
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -31,6 +31,6 @@ class TieredFilesystemEventSourceTest : EventSourceApiComplianceTest() {
                 (1..20).map { NewEvent("test", Blob.empty, Blob.empty) })
         val streamDirectory = temporaryFolder.root.toPath().resolve("test/test")!!
         assertThat(Files.list(streamDirectory).map { p -> p.fileName.toString() }.toListAndClose(),
-                hasItem("2017-03-30T22:54:00.000000000Z.0000000a.test.data.json"))
+                hasElement("2017-03-30T22:54:00.000000000Z.0000000a.test.data.json"))
     }
 }
