@@ -1,9 +1,9 @@
 package org.araqnid.eventstore.filesystem.flatpack
 
+import com.google.errorprone.annotations.CheckReturnValue
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import javax.annotation.CheckReturnValue
 
 class Lockable {
     private val lock: ReadWriteLock = ReentrantReadWriteLock()

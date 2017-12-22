@@ -1,7 +1,7 @@
 import java.io.ByteArrayOutputStream
 
 plugins {
-    kotlin("jvm") version "1.2.0"
+    kotlin("jvm") version "1.2.10"
     `maven-publish`
     id("com.jfrog.bintray") version "1.7.3"
 }
@@ -21,30 +21,35 @@ val gitVersion by extra {
 group = "org.araqnid"
 version = gitVersion
 
-val guavaVersion by extra("23.5-jre")
-val jacksonVersion by extra("2.8.7")
+val guavaVersion by extra("23.6-jre")
+val jacksonVersion by extra("2.9.3")
 
 repositories {
     jcenter()
 }
 
+configurations {
+    "compileClasspath" {
+        exclude(module = "jsr305")
+    }
+}
+
 dependencies {
     compile("com.google.guava:guava:$guavaVersion")
-    compile("org.slf4j:slf4j-api:1.7.25")
-    compile("org.tukaani:xz:1.5")
-    compile("org.apache.commons:commons-compress:1.13")
-    compile("com.fasterxml.jackson.datatype:jackson-datatype-guava:$jacksonVersion")
-    compile("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion")
-    compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
-    compile("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
-    implementation(kotlin("stdlib-jdk8", "1.2.0"))
-    implementation(kotlin("reflect", "1.2.0"))
-    implementation("com.google.code.findbugs:jsr305:3.0.0")
-    testCompile(kotlin("test-junit", "1.2.0"))
-    testCompile("org.mockito:mockito-core:2.7.21")
-    testCompile("com.timgroup:clocks-testing:1.0.1070")
-    testCompile("com.natpryce:hamkrest:1.4.2.2")
-    testCompile("org.araqnid:hamkrest-json:1.0.3")
+    implementation("org.slf4j:slf4j-api:1.7.25")
+    implementation("org.tukaani:xz:1.6")
+    implementation("org.apache.commons:commons-compress:1.15")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava:$jacksonVersion")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
+    implementation(kotlin("stdlib-jdk8", "1.2.10"))
+    implementation(kotlin("reflect", "1.2.10"))
+    testImplementation(kotlin("test-junit", "1.2.10"))
+    testImplementation("org.mockito:mockito-core:2.7.21")
+    testImplementation("com.timgroup:clocks-testing:1.0.1070")
+    testImplementation("com.natpryce:hamkrest:1.4.2.2")
+    testImplementation("org.araqnid:hamkrest-json:1.0.3")
 }
 
 tasks {
@@ -84,7 +89,6 @@ publishing {
         }
     }
 }
-
 
 bintray {
     user = (project.properties["bintray.user"] ?: "").toString()
