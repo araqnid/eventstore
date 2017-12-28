@@ -3,6 +3,7 @@ import java.io.ByteArrayOutputStream
 plugins {
     kotlin("jvm") version "1.2.10"
     `maven-publish`
+    `java-library`
     id("com.jfrog.bintray") version "1.7.3"
 }
 
@@ -35,7 +36,7 @@ configurations {
 }
 
 dependencies {
-    compile("com.google.guava:guava:$guavaVersion")
+    api("com.google.guava:guava:$guavaVersion")
     implementation("org.slf4j:slf4j-api:1.7.25")
     implementation("org.tukaani:xz:1.6")
     implementation("org.apache.commons:commons-compress:1.15")
