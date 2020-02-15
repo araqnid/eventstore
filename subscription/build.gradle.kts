@@ -23,7 +23,6 @@ dependencies {
     testImplementation("org.mockito:mockito-core:3.2.4")
     testImplementation("com.timgroup:clocks-testing:1.0.1070")
     testImplementation("com.natpryce:hamkrest:1.4.2.2")
-    testImplementation("org.araqnid:hamkrest-json:1.0.3")
 }
 
 java {

@@ -12,10 +12,10 @@ class Blob(private val content: ByteArray) : ByteSource() {
         fun fromString(content: String, charset: Charset = UTF_8) = Blob(content.toByteArray(charset))
 
         fun fromSource(byteSource: ByteSource): Blob {
-            if (byteSource.sizeIfKnown().isPresent && byteSource.sizeIfKnown().get() == 0L)
-                return Blob.empty
+            return if (byteSource.sizeIfKnown().isPresent && byteSource.sizeIfKnown().get() == 0L)
+                empty
             else
-                return Blob(byteSource.read())
+                Blob(byteSource.read())
         }
     }
 
@@ -26,11 +26,11 @@ class Blob(private val content: ByteArray) : ByteSource() {
     override fun sizeIfKnown(): com.google.common.base.Optional<Long> = com.google.common.base.Optional.of(size.toLong())
 
     override fun equals(other: Any?): Boolean {
-        if (other is Blob) {
-            return content.contentEquals(other.content)
+        return if (other is Blob) {
+            content.contentEquals(other.content)
         }
         else {
-            return false
+            false
         }
     }
 
