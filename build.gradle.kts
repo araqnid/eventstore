@@ -17,7 +17,7 @@ LibraryVersions.toMap().forEach { (name, value) ->
 
 dependencies {
     api("com.google.guava:guava:${LibraryVersions.guava}")
-    implementation("org.slf4j:slf4j-api:1.7.25")
+    implementation("org.slf4j:slf4j-api:${LibraryVersions.slf4j}")
     implementation("org.tukaani:xz:1.6")
     implementation("org.apache.commons:commons-compress:1.15")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava:${LibraryVersions.jackson}")
