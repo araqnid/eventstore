@@ -15,7 +15,7 @@ import java.time.Instant
 import java.util.stream.Stream
 import kotlin.streams.toList
 
-class FlatPackFilesystemEventReader(val baseDirectory: Path, val lockable: Lockable) : EventReader {
+class FlatPackFilesystemEventReader(val baseDirectory: Path, private val lockable: Lockable) : EventReader {
     private val jsonFactory = JsonFactory()
 
     override val emptyStorePosition = LooseFile("")

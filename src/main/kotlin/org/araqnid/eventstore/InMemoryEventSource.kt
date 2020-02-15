@@ -8,7 +8,7 @@ import java.util.stream.Stream
 class InMemoryEventSource(val clock: Clock) : EventSource, EventReader, EventCategoryReader, EventStreamReader, EventStreamWriter {
     companion object {
         val codec = positionCodecOfComparable(
-                { (index) -> Integer.toString(index) },
+                { (index) -> index.toString() },
                 { str -> InMemoryPosition(Integer.parseInt(str)) })
     }
 
@@ -65,6 +65,6 @@ class InMemoryEventSource(val clock: Clock) : EventSource, EventReader, EventCat
     private fun lastEventNumber(streamId: StreamId): Long = content.filter { it.event.streamId == streamId }.count().toLong() - 1
 
     private data class InMemoryPosition(val index: Int) : Position, Comparable<InMemoryPosition> {
-        override fun compareTo(other: InMemoryPosition): Int = Integer.compare(index, other.index)
+        override fun compareTo(other: InMemoryPosition): Int = index.compareTo(other.index)
     }
 }

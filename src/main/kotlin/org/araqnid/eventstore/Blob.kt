@@ -4,7 +4,6 @@ import com.google.common.io.ByteSource
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.nio.charset.Charset
-import java.util.Arrays
 import kotlin.text.Charsets.UTF_8
 
 class Blob(private val content: ByteArray) : ByteSource() {
@@ -28,14 +27,14 @@ class Blob(private val content: ByteArray) : ByteSource() {
 
     override fun equals(other: Any?): Boolean {
         if (other is Blob) {
-            return Arrays.equals(content, other.content)
+            return content.contentEquals(other.content)
         }
         else {
             return false
         }
     }
 
-    override fun hashCode(): Int = Arrays.hashCode(content)
+    override fun hashCode(): Int = content.contentHashCode()
 
     override fun toString(): String = "Blob($size bytes)"
 }

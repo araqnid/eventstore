@@ -23,7 +23,7 @@ data class LooseFile(val filename: String) : FlatPackFilesystemPosition {
     override fun toString() = filename
 }
 
-val codec = positionCodecOfComparable<FlatPackFilesystemPosition>(
+val codec = positionCodecOfComparable(
         { position ->
             when (position) {
                 is PackedFile -> "${position.packFileName}#${position.looseFilename}"

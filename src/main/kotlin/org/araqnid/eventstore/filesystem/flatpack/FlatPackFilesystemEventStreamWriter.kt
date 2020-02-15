@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.streams.toList
 import kotlin.text.Charsets.UTF_8
 
-class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Clock, val lockable: Lockable) : EventStreamWriter {
+class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Clock, private val lockable: Lockable) : EventStreamWriter {
     private val streamCounters: MutableMap<StreamId, StreamCounter> = ConcurrentHashMap()
 
     override fun write(streamId: StreamId, events: List<NewEvent>) {
@@ -54,7 +54,7 @@ class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Cl
         }
     }
 
-    private fun streamCounter(streamId: StreamId): StreamCounter = streamCounters.computeIfAbsent(streamId, { StreamCounter(it) })
+    private fun streamCounter(streamId: StreamId): StreamCounter = streamCounters.computeIfAbsent(streamId) { StreamCounter(it) }
 
     inner class StreamCounter(val streamId: StreamId) {
         @Volatile
@@ -67,7 +67,7 @@ class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Cl
             return Locked(path, lastSeen?.eventNumber ?: -1)
         }
 
-        inner class Locked(val path: Path, var lastEventNumber: Long) : AutoCloseable {
+        inner class Locked(val path: Path, private var lastEventNumber: Long) : AutoCloseable {
 
             override fun close() {
                 Files.delete(path)
@@ -83,8 +83,8 @@ class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Cl
         }
 
         private fun read() {
-            val files = scanFileNames().use {
-                it.sorted(Comparator.comparing<Path, String> { it.fileName.toString() }.reversed()).toList()
+            val files = scanFileNames().use { pathStream ->
+                pathStream.sorted(Comparator.comparing<Path, String> { it.fileName.toString() }.reversed()).toList()
             }
             files.forEach {
                 val streamPosition = positionIfStreamMatches(it)

@@ -17,10 +17,10 @@ import java.nio.file.StandardOpenOption
 import java.time.Clock
 
 abstract class JsonFileSnapshotPersister(baseDirectory: Path,
-                                val objectMapper: ObjectMapper,
-                                val positionCodec: PositionCodec,
-                                val compatibilityVersion: Long,
-                                clock: Clock)
+                                         private val objectMapper: ObjectMapper,
+                                         val positionCodec: PositionCodec,
+                                         private val compatibilityVersion: Long,
+                                         clock: Clock)
     : FilesystemSnapshotPersister(baseDirectory, ".json.xz", clock) {
 
     private val logger = LoggerFactory.getLogger(JsonFileSnapshotPersister::class.java)

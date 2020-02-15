@@ -11,7 +11,7 @@ import java.time.Duration
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
-class PollingEventSubscriptionService(val eventReader: EventReader, val sink: Sink, val interval: Duration) : AbstractScheduledService() {
+class PollingEventSubscriptionService(val eventReader: EventReader, private val sink: Sink, private val interval: Duration) : AbstractScheduledService() {
     interface Sink {
         fun accept(event: ResolvedEvent)
     }

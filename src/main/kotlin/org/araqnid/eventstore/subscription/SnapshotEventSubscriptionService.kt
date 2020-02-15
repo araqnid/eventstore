@@ -178,7 +178,7 @@ class SnapshotEventSubscriptionService(val subscription: PollingEventSubscriptio
     }
 
     private fun Executor.withThreadNameSuffix(suffix: String): Executor = Executor { command: Runnable ->
-        this.execute({
+        execute {
             val baseName = Thread.currentThread().name!!
             Thread.currentThread().name = "$baseName $suffix"
             try {
@@ -186,6 +186,6 @@ class SnapshotEventSubscriptionService(val subscription: PollingEventSubscriptio
             } finally {
                 Thread.currentThread().name = baseName
             }
-        })
+        }
     }
 }

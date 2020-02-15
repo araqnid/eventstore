@@ -12,7 +12,7 @@ import java.time.Clock
 import java.time.Instant
 import java.util.regex.Pattern
 
-abstract class FilesystemSnapshotPersister(val baseDirectory: Path, val fileExtension: String, val clock: Clock) : SnapshotPersister {
+abstract class FilesystemSnapshotPersister(val baseDirectory: Path, private val fileExtension: String, val clock: Clock) : SnapshotPersister {
     private val logger = LoggerFactory.getLogger(FilesystemSnapshotPersister::class.java)
     private val filePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z)\\.snapshot" + Pattern.quote(fileExtension))
     private val random = SecureRandom()
@@ -42,7 +42,7 @@ abstract class FilesystemSnapshotPersister(val baseDirectory: Path, val fileExte
         val timestamp = Instant.now(clock)
         val filename = "$timestamp.snapshot$fileExtension"
         val snapshotPath = baseDirectory.resolve(filename)
-        val temporaryPath = snapshotPath.resolveSibling("$filename.tmp.${random.nextLong()}")!!
+        val temporaryPath = snapshotPath.resolveSibling("$filename.tmp.${random.nextLong()}")
 
         val snapshotPosition =
             try {

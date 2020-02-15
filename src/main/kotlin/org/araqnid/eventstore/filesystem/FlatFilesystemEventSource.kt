@@ -48,7 +48,7 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
                     .filterNotNull()
         }
 
-        fun readEvent(dataPath: Path): ResolvedEvent? {
+        private fun readEvent(dataPath: Path): ResolvedEvent? {
             val matcher: Matcher = filenamePattern.matcher(dataPath.fileName.toString())
             if (!matcher.matches()) return null
             val timestamp = Instant.parse(matcher.group(1))
@@ -109,7 +109,7 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
                     .orElse(emptyStreamEventNumber)
         }
 
-        fun eventNumber(filename: String, matchStreamId: StreamId): Long? {
+        private fun eventNumber(filename: String, matchStreamId: StreamId): Long? {
             with(filenamePattern.matcher(filename)) {
                 if (!matches()) return null
                 if (StreamId(group(2), group(3)) != matchStreamId) return null
@@ -121,7 +121,7 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
     private fun metadataFilenameFor(dataFilename: String): String {
         val suffix = ".data.json"
         val prefix = dataFilename.substring(0, dataFilename.length - suffix.length)
-        return prefix + ".meta.json"
+        return "$prefix.meta.json"
     }
 
     private abstract class FilesystemPosition : Comparable<FilesystemPosition>, Position {

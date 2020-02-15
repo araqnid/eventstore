@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 class Lockable {
     private val lock: ReadWriteLock = ReentrantReadWriteLock()
 
-    inner class Resource(private val lock: Lock) : AutoCloseable {
+    private inner class Resource(private val lock: Lock) : AutoCloseable {
         init {
             lock.lock()
         }
@@ -19,8 +19,8 @@ class Lockable {
     }
 
     @CheckReturnValue
-    fun acquireRead() = Resource(lock.readLock())
+    fun acquireRead(): AutoCloseable = Resource(lock.readLock())
 
     @CheckReturnValue
-    fun acquireWrite() = Resource(lock.writeLock())
+    fun acquireWrite(): AutoCloseable = Resource(lock.writeLock())
 }

@@ -35,14 +35,14 @@ internal fun decodeFilename(str: String): String {
         val c = str[i]
         if (c == '%') {
             val cc = str[i + 1]
-            when (cc) {
+            i += when (cc) {
                 '%' -> {
                     builder.append('%')
-                    i += 2
+                    2
                 }
                 'u' -> {
                     builder.append(str.substring(i + 2, i + 6).toInt(16).toChar())
-                    i += 6
+                    6
                 }
                 else -> throw RuntimeException("Illegal escape specifier %$cc in $str")
             }
