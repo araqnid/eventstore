@@ -45,7 +45,7 @@ class FlatPackFilesystemEventSourceTest {
         eventSource.streamWriter.write(StreamId("category", "stream"), listOf(NewEvent("EventType", Blob.fromString("{}"))))
         clock.bump(5, SECONDS)
         eventSource.packLooseFiles(packMinimumFiles = 1)
-        assertThat(folder.files(), containsInAnyOrder("2016-05-20T05:16:58.061Z.cpio.xz", "2016-05-20T05:16:58.061Z.manifest")) // timestamp from latest event, not clock
+        assertThat(folder.files(), containsInAnyOrder(equalTo("2016-05-20T05:16:58.061Z.cpio.xz"), equalTo("2016-05-20T05:16:58.061Z.manifest"))) // timestamp from latest event, not clock
         assertThat(eventSource.storeReader.readAllForwards().toListAndClose(), anyElement(anything))
         assertThat(folder.textFileContent("2016-05-20T05:16:58.061Z.manifest"), equalTo("category stream 0"))
     }
@@ -54,6 +54,6 @@ class FlatPackFilesystemEventSourceTest {
         eventSource.streamWriter.write(StreamId("category", "stream"), listOf(NewEvent("EventType", Blob.fromString("{}"))))
         clock.bump(5, SECONDS)
         eventSource.packLooseFiles(packMinimumFiles = 2)
-        assertThat(folder.files(), containsInAnyOrder("2016-05-20T05:16:58.061Z.category.stream.0.EventType.json"))
+        assertThat(folder.files(), containsInAnyOrder(equalTo("2016-05-20T05:16:58.061Z.category.stream.0.EventType.json")))
     }
 }
