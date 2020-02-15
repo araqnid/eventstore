@@ -13,7 +13,6 @@ dependencies {
     api("com.google.guava:guava:${LibraryVersions.guava}")
     api(kotlin("stdlib-jdk8"))
     implementation("org.slf4j:slf4j-api:${LibraryVersions.slf4j}")
-    implementation(kotlin("reflect"))
     testImplementation(kotlin("test-junit"))
     testImplementation("com.natpryce:hamkrest:1.4.2.2")
     testImplementation(project(":api:testing"))

@@ -18,7 +18,6 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${LibraryVersions.jackson}")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${LibraryVersions.jackson}")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${LibraryVersions.jackson}")
-    implementation(kotlin("reflect"))
     testImplementation(kotlin("test-junit"))
     testImplementation("org.mockito:mockito-core:3.2.4")
     testImplementation("com.timgroup:clocks-testing:1.0.1070")
