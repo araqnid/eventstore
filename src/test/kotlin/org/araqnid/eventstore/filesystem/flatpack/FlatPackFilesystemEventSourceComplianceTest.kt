@@ -9,7 +9,7 @@ import java.time.ZoneId
 import java.util.concurrent.atomic.AtomicLong
 
 class FlatPackFilesystemEventSourceComplianceTest : EventSourceApiComplianceTest() {
-    @Rule @JvmField
+    @get:Rule
     val temporaryFolder = NIOTemporaryFolder()
 
     /**

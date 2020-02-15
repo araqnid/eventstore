@@ -14,7 +14,6 @@ import org.araqnid.eventstore.StreamId
 import org.slf4j.LoggerFactory
 import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZOutputStream
-import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.CREATE_NEW
@@ -24,6 +23,7 @@ import java.time.Clock
 import java.time.Instant
 import java.util.stream.Stream
 import kotlin.streams.toList
+import kotlin.text.Charsets.UTF_8
 
 class FlatPackFilesystemEventSource(val clock: Clock, val baseDirectory: Path) : EventSource {
     private val lockable = Lockable()

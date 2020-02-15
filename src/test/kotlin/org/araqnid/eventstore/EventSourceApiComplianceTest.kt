@@ -10,12 +10,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.stream.Collectors
 import java.util.stream.Collectors.maxBy
+import kotlin.text.Charsets.UTF_8
 
 abstract class EventSourceApiComplianceTest {
-    @Rule @JvmField val thrown = ExpectedException.none()!!
+    @get:Rule val thrown = ExpectedException.none()!!
 
     abstract val eventSource: EventSource
 

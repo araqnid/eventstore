@@ -19,7 +19,7 @@ import java.time.Instant
 import kotlin.streams.toList
 
 class FlatPackFilesystemEventReaderTest {
-    @Rule @JvmField
+    @get:Rule
     val folder = NIOTemporaryFolder()
 
     private val eventReader by lazy { FlatPackFilesystemEventReader(folder.root, Lockable()) }

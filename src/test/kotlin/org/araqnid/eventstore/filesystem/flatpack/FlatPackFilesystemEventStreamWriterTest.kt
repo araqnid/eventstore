@@ -19,10 +19,10 @@ import java.time.Instant
 import java.time.ZoneOffset.UTC
 
 class FlatPackFilesystemEventStreamWriterTest {
-    @Rule @JvmField
+    @get:Rule
     val folder = NIOTemporaryFolder()
 
-    @Rule @JvmField
+    @get:Rule
     val thrown: ExpectedException = ExpectedException.none()
 
     @Test fun `writes event as loose files`() {

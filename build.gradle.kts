@@ -1,66 +1,51 @@
-import java.io.ByteArrayOutputStream
-
 plugins {
-    kotlin("jvm") version "1.2.10"
+    kotlin("jvm") version "1.3.61"
     `maven-publish`
     `java-library`
-    id("com.jfrog.bintray") version "1.7.3"
+    id("com.jfrog.bintray") version "1.8.4"
 }
 
-val gitVersion by extra {
-    val capture = ByteArrayOutputStream()
-    project.exec {
-        commandLine("git", "describe", "--tags")
-        standardOutput = capture
-    }
-    String(capture.toByteArray())
-            .trim()
-            .removePrefix("v")
-            .replace('-', '.')
-}
-
-group = "org.araqnid"
-version = gitVersion
-
-val guavaVersion by extra("23.6-jre")
-val jacksonVersion by extra("2.9.3")
+group = "org.araqnid.eventstore"
 
 repositories {
     jcenter()
 }
 
-configurations {
-    "compileClasspath" {
-        exclude(module = "jsr305")
-    }
+LibraryVersions.toMap().forEach { (name, value) ->
+    ext["${name}Version"] = value
 }
 
 dependencies {
-    api("com.google.guava:guava:$guavaVersion")
+    api("com.google.guava:guava:${LibraryVersions.guava}")
     implementation("org.slf4j:slf4j-api:1.7.25")
     implementation("org.tukaani:xz:1.6")
     implementation("org.apache.commons:commons-compress:1.15")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava:$jacksonVersion")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jacksonVersion")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
-    implementation(kotlin("stdlib-jdk8", "1.2.10"))
-    implementation(kotlin("reflect", "1.2.10"))
-    testImplementation(kotlin("test-junit", "1.2.10"))
-    testImplementation("org.mockito:mockito-core:2.7.21")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava:${LibraryVersions.jackson}")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${LibraryVersions.jackson}")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${LibraryVersions.jackson}")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${LibraryVersions.jackson}")
+    implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("reflect"))
+    testImplementation(kotlin("test-junit"))
+    testImplementation("org.mockito:mockito-core:3.2.4")
     testImplementation("com.timgroup:clocks-testing:1.0.1070")
     testImplementation("com.natpryce:hamkrest:1.4.2.2")
     testImplementation("org.araqnid:hamkrest-json:1.0.3")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+}
+
 tasks {
-    withType<JavaCompile> {
-        sourceCompatibility = "1.8"
-        sourceCompatibility = "1.8"
-        options.encoding = "UTF-8"
-        options.compilerArgs.add("-parameters")
-        options.isIncremental = true
-        options.isDeprecation = true
+    "jar"(Jar::class) {
+        manifest {
+            attributes["Implementation-Title"] = project.description ?: project.name
+            attributes["Implementation-Version"] = project.version
+            attributes["Automatic-Module-Name"] = "org.araqnid.eventstore"
+        }
     }
 
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
@@ -68,25 +53,12 @@ tasks {
             jvmTarget = "1.8"
         }
     }
-
-    "jar"(Jar::class) {
-        manifest {
-            attributes["Implementation-Title"] = project.description ?: project.name
-            attributes["Implementation-Version"] = project.version
-        }
-    }
-}
-
-val sourcesJar by tasks.creating(Jar::class) {
-    classifier = "sources"
-    from(java.sourceSets["main"].allSource)
 }
 
 publishing {
-    (publications) {
-        "mavenJava"(MavenPublication::class) {
+    publications {
+        register<MavenPublication>("mavenJava") {
             from(components["java"])
-            artifact(sourcesJar)
         }
     }
 }
@@ -101,8 +73,8 @@ bintray {
     pkg.setLicenses("Apache-2.0")
     pkg.vcsUrl = "https://github.com/araqnid/eventstore"
     pkg.desc = "Store and replay sequences of events"
-    pkg.version.name = gitVersion
-    if (!gitVersion.contains(".g")) {
-        pkg.version.vcsTag = "v" + gitVersion
+    if (version != Project.DEFAULT_VERSION) {
+        pkg.version.name = version.toString()
+        pkg.version.vcsTag = "v$version"
     }
 }

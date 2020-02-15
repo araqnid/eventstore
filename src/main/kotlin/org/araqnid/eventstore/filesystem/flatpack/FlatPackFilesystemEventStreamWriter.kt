@@ -7,7 +7,6 @@ import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.WrongExpectedVersionException
 import java.io.OutputStream
-import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -15,6 +14,7 @@ import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.streams.toList
+import kotlin.text.Charsets.UTF_8
 
 class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Clock, val lockable: Lockable) : EventStreamWriter {
     private val streamCounters: MutableMap<StreamId, StreamCounter> = ConcurrentHashMap()

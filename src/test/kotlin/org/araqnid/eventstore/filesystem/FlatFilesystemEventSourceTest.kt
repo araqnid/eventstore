@@ -12,13 +12,13 @@ import org.araqnid.eventstore.toListAndClose
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
 import java.time.Clock
 import java.time.Instant
+import kotlin.text.Charsets.UTF_8
 
 class FlatFilesystemEventSourceTest : EventSourceApiComplianceTest() {
-    @Rule @JvmField val temporaryFolder = TemporaryFolder()
+    @get:Rule val temporaryFolder = TemporaryFolder()
     val baseDirectory: Path
         get() = temporaryFolder.root.toPath()
 

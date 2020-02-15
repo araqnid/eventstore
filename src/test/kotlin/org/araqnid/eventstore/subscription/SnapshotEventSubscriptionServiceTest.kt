@@ -1,6 +1,5 @@
 package org.araqnid.eventstore.subscription
 
-import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Monitor
 import com.google.common.util.concurrent.MoreExecutors.directExecutor
 import com.google.common.util.concurrent.Service
@@ -10,7 +9,6 @@ import com.natpryce.hamkrest.containsSubstring
 import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.present
 import com.natpryce.hamkrest.sameInstance
-import junit.framework.AssertionFailedError
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.InMemoryEventSource
@@ -31,8 +29,6 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
-import java.lang.AssertionError
-import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -42,9 +38,10 @@ import java.util.concurrent.Phaser
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.text.Charsets.UTF_8
 
 class SnapshotEventSubscriptionServiceTest {
-    @Rule @JvmField val mockito: MockitoRule = MockitoJUnit.rule()
+    @get:Rule val mockito: MockitoRule = MockitoJUnit.rule()
 
     @Test fun attempts_to_load_snapshot_and_performs_initial_play_on_startup() {
         val sink = mock<PollingEventSubscriptionService.Sink>()
@@ -437,7 +434,7 @@ class SnapshotEventSubscriptionServiceTest {
     private fun writeEvent(eventSource: InMemoryEventSource): ResolvedEvent {
         val eventsWritten = eventSource.storeReader.readAllForwards(eventSource.storeReader.emptyStorePosition).count()
         eventSource.write(StreamId("test", "test"),
-                ImmutableList.of(NewEvent("Test", Blob.fromString(eventsWritten.toString(), UTF_8), Blob.empty)))
+                listOf(NewEvent("Test", Blob.fromString(eventsWritten.toString(), UTF_8))))
         return eventSource.storeReader.readAllForwards(eventSource.storeReader.emptyStorePosition)
                 .max(comparing<ResolvedEvent, Position>({ it.position }, { left, right -> eventSource.positionCodec.comparePositions(left, right) }))
                 .get()
@@ -575,7 +572,7 @@ class SnapshotEventSubscriptionServiceTest {
 
         fun await(methodName: String) {
             if (!monitor.enterWhen(methodHasBeenCalled(methodName), 1, TimeUnit.SECONDS)) {
-                throw AssertionFailedError("Listener method never called: $methodName")
+                fail("Listener method never called: $methodName")
             }
             monitor.leave()
         }

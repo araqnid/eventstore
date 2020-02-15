@@ -4,8 +4,8 @@ import com.google.common.io.ByteSource
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Arrays
+import kotlin.text.Charsets.UTF_8
 
 class Blob(private val content: ByteArray) : ByteSource() {
     companion object {
