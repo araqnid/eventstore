@@ -3,8 +3,13 @@ plugins {
     id("com.jfrog.bintray") version "1.8.4" apply false
 }
 
+val buildNumber: String? = System.getenv("BUILD_NUMBER")
+val versionPrefix = "0.0"
+
 allprojects {
     group = "org.araqnid.eventstore"
+    if (buildNumber != null)
+        version = "${versionPrefix}.${buildNumber}"
 
     repositories {
         jcenter()
