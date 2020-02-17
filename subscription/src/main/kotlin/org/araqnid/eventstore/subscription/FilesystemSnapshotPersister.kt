@@ -1,8 +1,6 @@
 package org.araqnid.eventstore.subscription
 
 import org.araqnid.eventstore.Position
-import org.araqnid.eventstore.filterNotNull
-import org.araqnid.eventstore.toListAndClose
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Files
@@ -11,6 +9,7 @@ import java.security.SecureRandom
 import java.time.Clock
 import java.time.Instant
 import java.util.regex.Pattern
+import kotlin.streams.toList
 
 abstract class FilesystemSnapshotPersister(val baseDirectory: Path, private val fileExtension: String, val clock: Clock) : SnapshotPersister {
     private val logger = LoggerFactory.getLogger(FilesystemSnapshotPersister::class.java)
@@ -82,7 +81,7 @@ abstract class FilesystemSnapshotPersister(val baseDirectory: Path, private val 
     @Throws(IOException::class)
     abstract fun saveSnapshotFile(path: Path): Position
 
-    private fun snapshotFiles(): List<FileInfo> = Files.list(baseDirectory).map(this::snapshotFileInfo).filterNotNull().toListAndClose()
+    private fun snapshotFiles(): List<FileInfo> = Files.list(baseDirectory).use { it.toList() }.mapNotNull(this::snapshotFileInfo)
 
     private fun snapshotFileInfo(path: Path): FileInfo? {
         val matcher = filePattern.matcher(path.fileName.toString())

@@ -10,18 +10,19 @@ import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.EventSource
 import org.araqnid.eventstore.NewEvent
+import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.WrongExpectedVersionException
-import org.araqnid.eventstore.collectAndClose
 import org.araqnid.eventstore.emptyStreamEventNumber
-import org.araqnid.eventstore.onlyElement
-import org.araqnid.eventstore.toListAndClose
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
+import java.util.stream.Collector
 import java.util.stream.Collectors
 import java.util.stream.Collectors.maxBy
+import java.util.stream.Stream
+import kotlin.streams.toList
 import kotlin.text.Charsets.UTF_8
 
 abstract class EventSourceApiComplianceTest {
@@ -40,7 +41,7 @@ abstract class EventSourceApiComplianceTest {
 
         eventSource.streamWriter.write(streamId, listOf(eventA, eventB))
 
-        assertThat(eventSource.streamReader.readStreamForwards(streamId).map { it.event }.toListAndClose(),
+        assertThat(eventSource.streamReader.readStreamForwards(streamId).readEvents(),
                 containsInOrder(eventRecord(
                         streamId,
                         0L,
@@ -61,13 +62,13 @@ abstract class EventSourceApiComplianceTest {
         eventSource.streamWriter.write(stream0, listOf(eventA))
         eventSource.streamWriter.write(stream1, listOf(eventB))
 
-        assertThat(eventSource.streamReader.readStreamForwards(stream0).map { it.event }.toListAndClose(),
+        assertThat(eventSource.streamReader.readStreamForwards(stream0).readEvents(),
                 containsInOrder(eventRecord(
                         stream0,
                         0L,
                         eventA)))
 
-        assertThat(eventSource.streamReader.readStreamForwards(stream1).map { it.event }.toListAndClose(),
+        assertThat(eventSource.streamReader.readStreamForwards(stream1).readEvents(),
                 containsInOrder(eventRecord(
                         stream1,
                         0L,
@@ -133,7 +134,7 @@ abstract class EventSourceApiComplianceTest {
 
         eventSource.streamWriter.write(streamId, listOf(eventA, eventB))
 
-        assertThat(eventSource.streamReader.readStreamForwards(streamId, 0).map { it.event }.toListAndClose(),
+        assertThat(eventSource.streamReader.readStreamForwards(streamId, 0).readEvents(),
                 containsOnly(eventRecord(
                         streamId,
                         1L,
@@ -150,7 +151,7 @@ abstract class EventSourceApiComplianceTest {
                 jsonBlob("B-metadata"))
         eventSource.streamWriter.write(streamId, listOf(eventA, eventB))
 
-        assertThat(eventSource.streamReader.readStreamForwards(streamId, 1).map { it.event }.toListAndClose(),
+        assertThat(eventSource.streamReader.readStreamForwards(streamId, 1).readEvents(),
                 Matcher(Collection<EventRecord>::isEmpty))
     }
 
@@ -171,7 +172,7 @@ abstract class EventSourceApiComplianceTest {
         eventSource.streamWriter.write(stream1, listOf(eventB))
         eventSource.streamWriter.write(stream2, listOf(eventC))
 
-        assertThat(eventSource.storeReader.readAllForwards().map { it.event }.toListAndClose(),
+        assertThat(eventSource.storeReader.readAllForwards().readEvents(),
                 containsInOrder(eventRecord(
                         stream0,
                         0L,
@@ -199,7 +200,7 @@ abstract class EventSourceApiComplianceTest {
 
         val position = eventSource.storeReader.readAllForwards().toListAndClose()[1].position
 
-        assertThat(eventSource.storeReader.readAllForwards(position).map { it.event }.toListAndClose(),
+        assertThat(eventSource.storeReader.readAllForwards(position).readEvents(),
                 containsOnly(eventRecord(
                         stream2,
                         0L,
@@ -225,7 +226,7 @@ abstract class EventSourceApiComplianceTest {
 
         val position = eventSource.storeReader.readAllForwards().toListAndClose().last().position
 
-        assertThat(eventSource.storeReader.readAllForwards(position).map { it.event }.toListAndClose(),
+        assertThat(eventSource.storeReader.readAllForwards(position).readEvents(),
                 Matcher(Collection<EventRecord>::isEmpty))
     }
 
@@ -251,7 +252,7 @@ abstract class EventSourceApiComplianceTest {
         eventSource.streamWriter.write(stream2, listOf(eventC))
         eventSource.streamWriter.write(stream3, listOf(eventD))
 
-        assertThat(eventSource.categoryReader.readCategoryForwards("alpha").map { it.event }.toListAndClose(),
+        assertThat(eventSource.categoryReader.readCategoryForwards("alpha").readEvents(),
                 containsInOrder(eventRecord(
                         stream0,
                         0,
@@ -282,7 +283,7 @@ abstract class EventSourceApiComplianceTest {
 
         val position = eventSource.storeReader.readAllForwards().limit(1).map { re -> re.position }.collectAndClose(Collectors.maxBy(eventSource.storeReader.positionCodec::comparePositions)).get()
 
-        assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).map { it.event }.toListAndClose(),
+        assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).readEvents(),
                 containsOnly(eventRecord(
                         stream3,
                         0,
@@ -313,7 +314,7 @@ abstract class EventSourceApiComplianceTest {
 
         val position = eventSource.storeReader.readAllForwards().map { re -> re.position }.collectAndClose(maxBy(eventSource.storeReader.positionCodec::comparePositions)).get()
 
-        assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).map { it.event }.toListAndClose(),
+        assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).readEvents(),
                 Matcher(Collection<EventRecord>::isEmpty))
     }
 }
@@ -337,3 +338,13 @@ private fun eventRecord(streamId: StreamId, eventNumber: Long, type: String, dat
 
 private val Blob.pretty: String
     get() = asCharSource(UTF_8).read()
+
+private fun <T> Stream<T>.onlyElement(): T? {
+    return use {
+        toList().single()
+    }
+}
+
+private fun <T, R> Stream<T>.collectAndClose(collector: Collector<in T, *, out R>): R = use { it.collect(collector) }
+private fun <T> Stream<T>.toListAndClose(): List<T> = use { it.toList() }
+private fun Stream<ResolvedEvent>.readEvents(): List<EventRecord> = map { it.event }.use { it.toList() }

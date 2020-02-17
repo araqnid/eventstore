@@ -6,7 +6,6 @@ import com.google.common.util.concurrent.Service
 import org.araqnid.eventstore.EventReader
 import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.ResolvedEvent
-import org.araqnid.eventstore.forEachOrderedAndClose
 import java.time.Duration
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
@@ -43,15 +42,18 @@ class PollingEventSubscriptionService(val eventReader: EventReader, private val 
         var eventsRead = 0
         emitter.pollStarted(lastPosition)
         try {
-            eventReader.readAllForwards(lastPosition).forEachOrderedAndClose { re ->
-                if (!isRunning) throw ConsumptionStoppedException()
-                try {
-                    sink.accept(re)
-                    lastPosition = re.position
-                    ++eventsRead
-                } catch (e: Exception) {
-                    throw RuntimeException("Failed to process $re", e)
+            eventReader.readAllForwards(lastPosition).use {
+                it.forEachOrdered { re ->
+                    if (!isRunning) throw ConsumptionStoppedException()
+                    try {
+                        sink.accept(re)
+                        lastPosition = re.position
+                        ++eventsRead
+                    } catch (e: Exception) {
+                        throw RuntimeException("Failed to process $re", e)
+                    }
                 }
+
             }
             emitter.pollFinished(lastPosition, eventsRead)
         } catch (ignored: ConsumptionStoppedException) {

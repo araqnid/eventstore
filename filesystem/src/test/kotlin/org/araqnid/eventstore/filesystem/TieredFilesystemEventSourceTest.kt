@@ -7,7 +7,6 @@ import org.araqnid.eventstore.EventSource
 import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.testing.EventSourceApiComplianceTest
-import org.araqnid.eventstore.toListAndClose
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -15,6 +14,7 @@ import java.nio.file.Files
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
+import kotlin.streams.toList
 
 class TieredFilesystemEventSourceTest : EventSourceApiComplianceTest() {
     @get:Rule val temporaryFolder = TemporaryFolder()
@@ -29,8 +29,8 @@ class TieredFilesystemEventSourceTest : EventSourceApiComplianceTest() {
         clock = Clock.fixed(Instant.parse("2017-03-30T22:54:00Z"), ZoneId.systemDefault())
         eventSource.streamWriter.write(StreamId("test", "test"),
                 (1..20).map { NewEvent("test", Blob.empty ) })
-        val streamDirectory = temporaryFolder.root.toPath().resolve("test/test")!!
-        assertThat(Files.list(streamDirectory).map { p -> p.fileName.toString() }.toListAndClose(),
+        val streamDirectory = temporaryFolder.root.toPath().resolve("test/test")
+        assertThat(Files.list(streamDirectory).map { p -> p.fileName.toString() }.use { it.toList() },
                 hasElement("2017-03-30T22:54:00.000000000Z.0000000a.test.data.json"))
     }
 }

@@ -7,6 +7,7 @@ import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry
 import org.apache.commons.compress.archivers.cpio.CpioArchiveOutputStream
 import org.araqnid.eventstore.testutil.NIOTemporaryFolder
 import java.nio.file.Files
+import kotlin.streams.toList
 import kotlin.text.Charsets.UTF_8
 
 internal fun NIOTemporaryFolder.givenLooseFile(filename: String, content: String) {
@@ -35,4 +36,4 @@ internal fun NIOTemporaryFolder.textFileContent(filename: String): String {
     return Files.readAllLines(root.resolve(filename), UTF_8).joinToString("\n")
 }
 
-internal fun NIOTemporaryFolder.files() = Files.list(root).map { it.fileName.toString() }.toListAndClose().toSet()
+internal fun NIOTemporaryFolder.files() = Files.list(root).map { it.fileName.toString() }.use { it.toList() }.toSet()

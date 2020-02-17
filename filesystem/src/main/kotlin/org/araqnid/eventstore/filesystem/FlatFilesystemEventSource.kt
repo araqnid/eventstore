@@ -13,9 +13,7 @@ import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.PositionCodec
 import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
-import org.araqnid.eventstore.collectAndClose
 import org.araqnid.eventstore.emptyStreamEventNumber
-import org.araqnid.eventstore.filterNotNull
 import org.araqnid.eventstore.positionCodecOfComparable
 import java.nio.file.Files
 import java.nio.file.Path

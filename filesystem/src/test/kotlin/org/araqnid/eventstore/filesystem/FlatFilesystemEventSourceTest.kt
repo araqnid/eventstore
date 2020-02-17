@@ -6,15 +6,17 @@ import com.natpryce.hamkrest.equalTo
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.EventSource
+import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.testing.EventSourceApiComplianceTest
-import org.araqnid.eventstore.toListAndClose
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 import java.time.Clock
 import java.time.Instant
+import java.util.stream.Stream
+import kotlin.streams.toList
 import kotlin.text.Charsets.UTF_8
 
 class FlatFilesystemEventSourceTest : EventSourceApiComplianceTest() {
@@ -34,8 +36,10 @@ class FlatFilesystemEventSourceTest : EventSourceApiComplianceTest() {
         val eventRecord = EventRecord(StreamId("category", "id"), 10L, Instant.parse("2017-03-30T22:54:00Z"),
                 "test", Blob.fromString("{ }"), Blob.fromString("{ /*meta*/ }"))
 
-        assertThat(eventSource.storeReader.readAllForwards().map { it.event } .toListAndClose(), equalTo(listOf(eventRecord)))
-        assertThat(eventSource.categoryReader.readCategoryForwards("category").map { it.event } .toListAndClose(), equalTo(listOf(eventRecord)))
-        assertThat(eventSource.streamReader.readStreamForwards(eventRecord.streamId).map { it.event } .toListAndClose(), equalTo(listOf(eventRecord)))
+        assertThat(eventSource.storeReader.readAllForwards().readEvents(), equalTo(listOf(eventRecord)))
+        assertThat(eventSource.categoryReader.readCategoryForwards("category").readEvents(), equalTo(listOf(eventRecord)))
+        assertThat(eventSource.streamReader.readStreamForwards(eventRecord.streamId).readEvents(), equalTo(listOf(eventRecord)))
     }
+
+    private fun Stream<ResolvedEvent>.readEvents(): List<EventRecord> = map { it.event }.use { it.toList() }
 }

@@ -15,9 +15,7 @@ import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.emptyStreamEventNumber
-import org.araqnid.eventstore.filterNotNull
 import org.araqnid.eventstore.positionCodecOfComparable
-import org.araqnid.eventstore.toListAndClose
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -32,6 +30,7 @@ import java.time.temporal.ChronoField
 import java.util.Comparator.comparing
 import java.util.regex.Pattern
 import java.util.stream.Stream
+import kotlin.streams.toList
 
 class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSource {
     override val storeReader: EventReader = StoreReader()
@@ -56,8 +55,8 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
     internal inner class StoreReader : EventReader {
         override fun readAllForwards(after: Position): Stream<ResolvedEvent> {
             val afterFilename = (after as FilesystemPosition).filename.toString()
-            val categories = Files.list(baseDirectory).toListAndClose()
-            val streamDirectories = categories.flatMap { category -> Files.list(category).toListAndClose() }
+            val categories = baseDirectory.listFiles()
+            val streamDirectories = categories.flatMap { category -> category.listFiles() }
             return streamDirectories.stream()
                     .flatMap { path -> Files.list(path) }
                     .filter { p -> p.fileName.toString() > afterFilename }
@@ -153,6 +152,8 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
     private data class FilesystemPosition(val filename: Path) : Comparable<FilesystemPosition>, Position {
         override fun compareTo(other: FilesystemPosition): Int = filename.compareTo(other.filename)
     }
+
+    private fun Path.listFiles() = Files.list(this).use { it.toList() }
 
     companion object {
         val positionCodec = positionCodecOfComparable(

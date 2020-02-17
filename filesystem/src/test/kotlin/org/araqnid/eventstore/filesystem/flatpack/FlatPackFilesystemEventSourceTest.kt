@@ -7,7 +7,9 @@ import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.hasElement
 import com.timgroup.clocks.testing.ManualClock
 import org.araqnid.eventstore.Blob
+import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.NewEvent
+import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.testing.containsInAnyOrder
 import org.araqnid.eventstore.testutil.NIOTemporaryFolder
@@ -17,6 +19,8 @@ import org.junit.rules.ExpectedException
 import java.time.Instant
 import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.SECONDS
+import java.util.stream.Stream
+import kotlin.streams.toList
 
 class FlatPackFilesystemEventSourceTest {
     @Rule
@@ -33,7 +37,7 @@ class FlatPackFilesystemEventSourceTest {
 
     @Test fun `produces store reader`() {
         folder.givenLooseFile("2016-05-20T05:16:58.061Z.category.stream.0.EventType.json", """{ "key": "value" }""")
-        assertThat(eventSource.storeReader.readAllForwards().toListAndClose(), anyElement(anything))
+        assertThat(eventSource.storeReader.readAllForwards().readEvents(), anyElement(anything))
     }
 
     @Test fun `produces stream writer`() {
@@ -46,7 +50,7 @@ class FlatPackFilesystemEventSourceTest {
         clock.bump(5, SECONDS)
         eventSource.packLooseFiles(packMinimumFiles = 1)
         assertThat(folder.files(), containsInAnyOrder(equalTo("2016-05-20T05:16:58.061Z.cpio.xz"), equalTo("2016-05-20T05:16:58.061Z.manifest"))) // timestamp from latest event, not clock
-        assertThat(eventSource.storeReader.readAllForwards().toListAndClose(), anyElement(anything))
+        assertThat(eventSource.storeReader.readAllForwards().readEvents(), anyElement(anything))
         assertThat(folder.textFileContent("2016-05-20T05:16:58.061Z.manifest"), equalTo("category stream 0"))
     }
 
@@ -56,4 +60,6 @@ class FlatPackFilesystemEventSourceTest {
         eventSource.packLooseFiles(packMinimumFiles = 2)
         assertThat(folder.files(), containsInAnyOrder(equalTo("2016-05-20T05:16:58.061Z.category.stream.0.EventType.json")))
     }
+
+    private fun Stream<ResolvedEvent>.readEvents(): List<EventRecord> = map { it.event }.use { it.toList() }
 }
