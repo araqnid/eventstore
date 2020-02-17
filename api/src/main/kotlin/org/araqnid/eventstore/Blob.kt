@@ -14,7 +14,7 @@ class Blob(private val content: ByteArray) : ByteSource() {
         fun fromString(content: String, charset: Charset = UTF_8) = Blob(content.toByteArray(charset))
 
         fun fromSource(byteSource: ByteSource): Blob {
-            return if (byteSource.sizeIfKnown().isPresent && byteSource.sizeIfKnown().get() == 0L)
+            return if (byteSource.isEmpty)
                 empty
             else
                 Blob(byteSource.read())
