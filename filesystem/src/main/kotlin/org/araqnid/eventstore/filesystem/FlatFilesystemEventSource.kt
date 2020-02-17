@@ -42,8 +42,7 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
             return Files.list(baseDirectory)
                     .filter { it.fileName.toString() > afterFilesystemPosition.filename && it.fileName.toString().endsWith(".data.json") }
                     .sorted(Comparator.comparing<Path, String> { it.fileName.toString() })
-                    .map { readEvent(it) }
-                    .filterNotNull()
+                    .mapNotNull { readEvent(it) }
         }
 
         private fun readEvent(dataPath: Path): ResolvedEvent? {
@@ -101,8 +100,7 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
 
         override fun lastEventNumber(streamId: StreamId): Long {
             return Files.list(baseDirectory)
-                    .map { path -> eventNumber(path.fileName.toString(), streamId) }
-                    .filterNotNull()
+                    .mapNotNull { path -> eventNumber(path.fileName.toString(), streamId) }
                     .collectAndClose(maxBy(naturalOrder()))
                     .orElse(emptyStreamEventNumber)
         }
@@ -159,4 +157,8 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
                 .withResolverStyle(ResolverStyle.STRICT)
                 .withZone(ZoneOffset.UTC)
     }
+}
+
+private fun <T, R> Stream<T>.collectAndClose(collector: java.util.stream.Collector<in T, *, out R>): R = use {
+    it.collect(collector)
 }

@@ -44,8 +44,7 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
             if (!Files.isDirectory(streamDirectory)) throw NoSuchStreamException(streamId)
             return Files.list(streamDirectory)
                     .sorted(filenameComparator)
-                    .map { readEvent(streamId, it) }
-                    .filterNotNull()
+                    .mapNotNull { readEvent(streamId, it) }
                     .filter { it.event.eventNumber > after }
         }
 
@@ -61,8 +60,7 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
                     .flatMap { path -> Files.list(path) }
                     .filter { p -> p.fileName.toString() > afterFilename }
                     .sorted(filenameComparator)
-                    .map { readEvent(it) }
-                    .filterNotNull()
+                    .mapNotNull { readEvent(it) }
         }
 
         override val emptyStorePosition: Position = TieredFilesystemEventSource.emptyStorePosition
@@ -79,8 +77,7 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
                     .flatMap { path -> Files.list(path) }
                     .filter { p -> p.fileName.toString() > afterFilename }
                     .sorted(filenameComparator)
-                    .map { readEvent(it) }
-                    .filterNotNull()
+                    .mapNotNull { readEvent(it) }
         }
 
         override fun emptyCategoryPosition(category: String): Position = TieredFilesystemEventSource.emptyStorePosition
