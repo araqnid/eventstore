@@ -48,7 +48,7 @@ class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Cl
         val filename = "$timestamp.${streamId.category}.${streamId.id}.$eventNumber.${event.type}.json"
         Files.newOutputStream(baseDirectory.resolve(filename), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE).use { output: OutputStream ->
             event.data.copyTo(output)
-            if (event.metadata.size > 0) {
+            if (!event.metadata.isEmpty) {
                 event.metadata.copyTo(output)
             }
         }
