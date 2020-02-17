@@ -12,8 +12,8 @@ LibraryVersions.toMap().forEach { (name, value) ->
 dependencies {
     api(project(":api"))
     api(kotlin("test-junit"))
-    implementation(kotlin("test-junit"))
-    implementation("com.natpryce:hamkrest:1.4.2.2")
+    api("junit:junit:4.13")
+    implementation("com.natpryce:hamkrest:${LibraryVersions.hamkrest}")
 }
 
 java {

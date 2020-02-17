@@ -14,10 +14,9 @@ import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.WrongExpectedVersionException
 import org.araqnid.eventstore.emptyStreamEventNumber
+import org.junit.Assert
 import org.junit.Assert.assertTrue
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.util.stream.Collector
 import java.util.stream.Collectors
 import java.util.stream.Collectors.maxBy
@@ -26,8 +25,6 @@ import kotlin.streams.toList
 import kotlin.text.Charsets.UTF_8
 
 abstract class EventSourceApiComplianceTest {
-    @get:Rule val thrown = ExpectedException.none()!!
-
     abstract val eventSource: EventSource
 
     @Test fun read_events_written_to_stream() {
@@ -100,11 +97,12 @@ abstract class EventSourceApiComplianceTest {
     }
 
     @Test fun fails_if_expected_event_number_not_satisfied_yet() {
-        thrown.expect(WrongExpectedVersionException::class.java)
-        eventSource.streamWriter.write(StreamId("alpha", "1"), 0, listOf(
-                NewEvent("type-A",
-                        jsonBlob("A-data"),
-                        jsonBlob("A-metadata"))))
+        assertThrows<WrongExpectedVersionException> {
+            eventSource.streamWriter.write(StreamId("alpha", "1"), 0, listOf(
+                    NewEvent("type-A",
+                            jsonBlob("A-data"),
+                            jsonBlob("A-metadata"))))
+        }
     }
 
     @Test fun fails_if_expected_event_number_already_passed() {
@@ -117,10 +115,11 @@ abstract class EventSourceApiComplianceTest {
                         jsonBlob("B-data"),
                         jsonBlob("B-metadata"))))
 
-        thrown.expect(WrongExpectedVersionException::class.java)
-        eventSource.streamWriter.write(streamId, 0, listOf(NewEvent("type-C",
-                jsonBlob("C-data"),
-                jsonBlob("C-metadata"))))
+        assertThrows<WrongExpectedVersionException> {
+            eventSource.streamWriter.write(streamId, 0, listOf(NewEvent("type-C",
+                    jsonBlob("C-data"),
+                    jsonBlob("C-metadata"))))
+        }
     }
 
     @Test fun read_stream_after_specific_event_number() {
@@ -348,3 +347,6 @@ private fun <T> Stream<T>.onlyElement(): T? {
 private fun <T, R> Stream<T>.collectAndClose(collector: Collector<in T, *, out R>): R = use { it.collect(collector) }
 private fun <T> Stream<T>.toListAndClose(): List<T> = use { it.toList() }
 private fun Stream<ResolvedEvent>.readEvents(): List<EventRecord> = map { it.event }.use { it.toList() }
+private inline fun <reified X : Throwable> assertThrows(crossinline body: () -> Unit) {
+    Assert.assertThrows(X::class.java) { body() }
+}

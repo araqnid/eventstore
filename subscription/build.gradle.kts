@@ -19,9 +19,10 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${LibraryVersions.jackson}")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${LibraryVersions.jackson}")
     testImplementation(kotlin("test-junit"))
+    testImplementation("junit:junit:4.13")
     testImplementation("org.mockito:mockito-core:3.2.4")
     testImplementation("com.timgroup:clocks-testing:1.0.1070")
-    testImplementation("com.natpryce:hamkrest:1.4.2.2")
+    testImplementation("com.natpryce:hamkrest:${LibraryVersions.hamkrest}")
 }
 
 java {

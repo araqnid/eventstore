@@ -13,7 +13,8 @@ dependencies {
     api("com.google.guava:guava:${LibraryVersions.guava}")
     api(kotlin("stdlib-jdk8"))
     testImplementation(kotlin("test-junit"))
-    testImplementation("com.natpryce:hamkrest:1.4.2.2")
+    testImplementation("junit:junit:4.13")
+    testImplementation("com.natpryce:hamkrest:${LibraryVersions.hamkrest}")
     testImplementation(project(":api:testing"))
 }
 

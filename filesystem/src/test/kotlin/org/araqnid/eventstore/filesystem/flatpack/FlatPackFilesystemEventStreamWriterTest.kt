@@ -11,9 +11,9 @@ import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.WrongExpectedVersionException
 import org.araqnid.eventstore.testutil.NIOTemporaryFolder
 import org.araqnid.hamkrest.json.equivalentTo
+import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset.UTC
@@ -21,9 +21,6 @@ import java.time.ZoneOffset.UTC
 class FlatPackFilesystemEventStreamWriterTest {
     @get:Rule
     val folder = NIOTemporaryFolder()
-
-    @get:Rule
-    val thrown: ExpectedException = ExpectedException.none()
 
     @Test fun `writes event as loose files`() {
         eventStreamWriterAt(Instant.parse("2017-03-13T19:23:45.123Z"))
@@ -50,10 +47,11 @@ class FlatPackFilesystemEventStreamWriterTest {
 
     @Test fun `refuses to write event with unsatisfied expectation`() {
         folder.givenLooseFile("2017-03-13T19:00:00.000Z.category.stream.0.EventType.json", """{"when":"early"}""")
-        thrown.expect(WrongExpectedVersionException::class.java)
-        eventStreamWriterAt(Instant.parse("2017-03-13T19:23:45.123Z"))
-                .write(StreamId("category", "stream"), 2L, listOf(NewEvent("EventType", Blob.fromString("""{"when":"late"}"""))))
-        assertThat(folder.files(), equalTo(setOf("2017-03-13T19:00:00.000Z.category.stream.0.EventType.json")))
+        assertThrows<WrongExpectedVersionException> {
+            eventStreamWriterAt(Instant.parse("2017-03-13T19:23:45.123Z"))
+                    .write(StreamId("category", "stream"), 2L, listOf(NewEvent("EventType", Blob.fromString("""{"when":"late"}"""))))
+            assertThat(folder.files(), equalTo(setOf("2017-03-13T19:00:00.000Z.category.stream.0.EventType.json")))
+        }
     }
 
     @Test fun `writes using distinct event numbers in a single call`() {
@@ -105,4 +103,8 @@ class FlatPackFilesystemEventStreamWriterTest {
     }
 
     private fun eventStreamWriterAt(now: Instant) = FlatPackFilesystemEventStreamWriter(folder.root, Clock.fixed(now, UTC), Lockable())
+}
+
+private inline fun <reified X : Throwable> assertThrows(crossinline body: () -> Unit) {
+    Assert.assertThrows(X::class.java) { body() }
 }

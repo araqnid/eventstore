@@ -15,7 +15,6 @@ import org.araqnid.eventstore.testing.containsInAnyOrder
 import org.araqnid.eventstore.testutil.NIOTemporaryFolder
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.time.Instant
 import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.SECONDS
@@ -23,13 +22,8 @@ import java.util.stream.Stream
 import kotlin.streams.toList
 
 class FlatPackFilesystemEventSourceTest {
-    @Rule
-    @JvmField
+    @get:Rule
     val folder = NIOTemporaryFolder()
-
-    @Rule
-    @JvmField
-    val thrown: ExpectedException = ExpectedException.none()
 
     private val clock = ManualClock(Instant.parse("2016-05-20T05:16:58.061Z"), UTC)
 
