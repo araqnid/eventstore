@@ -3,8 +3,11 @@ package org.araqnid.eventstore.filesystem.flatpack
 import com.fasterxml.jackson.core.JsonFactory
 import com.google.common.io.ByteStreams
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.stream.consumeAsFlow
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventReader
@@ -28,38 +31,37 @@ class FlatPackFilesystemEventReader(val baseDirectory: Path, private val lockabl
         val pos = after as FlatPackFilesystemPosition
         return flow {
             lockable.acquireRead().use {
-                val packFiles = filesAfter(pos).use { stream ->
-                    stream.filter { it.isPackFile() }
-                        .sorted(sortByFilename)
-                        .toList()
-                }
-                val stream: Stream<ResolvedEvent> = if (packFiles.isEmpty()) {
-                    filesAfter(pos)
+                val packFiles = filesAfter(pos)
+                    .filter { it.isPackFile() }
+                    .sortedWith(sortByFilename)
+                if (packFiles.isEmpty()) {
+                    emitAll(filesAfter(pos)
                         .filter { it.isLooseFile() }
-                        .sorted(sortByFilename)
+                        .sortedWith(sortByFilename)
                         .map { looseFile(it) }
+                        .asFlow())
                 } else {
                     val latestPackFile = packFiles[packFiles.size - 1]
-                    filesAfter(pos)
+                    for (path in filesAfter(pos)
                         .filter { it.isPackFile() || it.isLooseFile() && it.fileName.toString() > latestPackFile.fileName.toString() }
-                        .sorted(sortByFilename)
-                        .flatMap { pathToEvents(it, pos) }
+                        .sortedWith(sortByFilename)) {
+                        emitAll(pathToEvents(path, pos))
+                    }
                 }
-                emitAll(stream.consumeAsFlow())
             }
         }
     }
 
     override val positionCodec = codec
 
-    private fun filesAfter(pos: FlatPackFilesystemPosition): Stream<Path> =
-            Files.list(baseDirectory).filter { it.fileName.toString() > pos.looseFilename }
+    private fun filesAfter(pos: FlatPackFilesystemPosition): List<Path> =
+            Files.list(baseDirectory).filter { it.fileName.toString() > pos.looseFilename }.use { it.toList() }
 
-    private fun pathToEvents(path: Path, pos: FlatPackFilesystemPosition): Stream<ResolvedEvent> {
+    private fun pathToEvents(path: Path, pos: FlatPackFilesystemPosition): Flow<ResolvedEvent> {
         return when {
-            path.isPackFile() -> unpack(path, pos)
-            path.isLooseFile() -> Stream.of(looseFile(path))
-            else -> Stream.empty()
+            path.isPackFile() -> unpack(path, pos).consumeAsFlow()
+            path.isLooseFile() -> flowOf(looseFile(path))
+            else -> emptyFlow()
         }
     }
 
