@@ -5,10 +5,6 @@ plugins {
     id("com.jfrog.bintray")
 }
 
-LibraryVersions.toMap().forEach { (name, value) ->
-    ext["${name}Version"] = value
-}
-
 dependencies {
     api(project(":api"))
     implementation("org.slf4j:slf4j-api:${LibraryVersions.slf4j}")

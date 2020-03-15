@@ -15,7 +15,3 @@ allprojects {
         jcenter()
     }
 }
-
-LibraryVersions.toMap().forEach { (name, value) ->
-    ext["${name}Version"] = value
-}

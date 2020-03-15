@@ -5,10 +5,6 @@ plugins {
     id("com.jfrog.bintray")
 }
 
-LibraryVersions.toMap().forEach { (name, value) ->
-    ext["${name}Version"] = value
-}
-
 dependencies {
     api("com.google.guava:guava:${LibraryVersions.guava}")
     api(kotlin("stdlib-jdk8"))
