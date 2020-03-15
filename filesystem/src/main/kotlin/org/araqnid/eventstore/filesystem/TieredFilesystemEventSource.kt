@@ -32,7 +32,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.ResolverStyle
 import java.time.temporal.ChronoField
-import java.util.Comparator.comparing
 import java.util.regex.Pattern
 import kotlin.streams.toList
 
@@ -180,6 +179,6 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
                 .toFormatter()
                 .withResolverStyle(ResolverStyle.STRICT)
                 .withZone(ZoneOffset.UTC)
-        private val filenameComparator: Comparator<Path> = comparing<Path, String> { it.fileName.toString() }
+        private val filenameComparator = compareBy<Path> { it.fileName.toString() }
     }
 }

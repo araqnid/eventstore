@@ -3,7 +3,7 @@ package org.araqnid.eventstore.filesystem.flatpack
 import java.nio.file.Path
 import java.util.regex.Pattern
 
-internal val sortByFilename: Comparator<Path> = Comparator.comparing(Path::getFileName)
+internal val sortByFilename = compareBy(Path::getFileName)
 
 internal fun Path.isPackFile() = fileName.toString().endsWith(".cpio.xz")
 

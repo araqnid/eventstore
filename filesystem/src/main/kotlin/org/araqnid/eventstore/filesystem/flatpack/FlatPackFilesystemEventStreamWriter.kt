@@ -84,7 +84,7 @@ class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Cl
 
         private fun read() {
             val files = scanFileNames().use { pathStream ->
-                pathStream.sorted(Comparator.comparing<Path, String> { it.fileName.toString() }.reversed()).toList()
+                pathStream.sorted(compareBy<Path> { it.fileName.toString() }.reversed()).toList()
             }
             files.forEach {
                 val streamPosition = positionIfStreamMatches(it)
