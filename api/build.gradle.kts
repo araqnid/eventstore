@@ -7,6 +7,8 @@ plugins {
 
 dependencies {
     api("com.google.guava:guava:${LibraryVersions.guava}")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${LibraryVersions.coroutines}")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${LibraryVersions.coroutines}")
     api(kotlin("stdlib-jdk8"))
     testImplementation(kotlin("test-junit"))
     testImplementation("junit:junit:4.13")

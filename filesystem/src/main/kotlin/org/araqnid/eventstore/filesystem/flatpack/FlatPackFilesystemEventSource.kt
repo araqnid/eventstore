@@ -1,6 +1,7 @@
 package org.araqnid.eventstore.filesystem.flatpack
 
 import com.google.common.io.MoreFiles
+import kotlinx.coroutines.flow.filter
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry
 import org.apache.commons.compress.archivers.cpio.CpioArchiveOutputStream
 import org.araqnid.eventstore.EventCategoryReader

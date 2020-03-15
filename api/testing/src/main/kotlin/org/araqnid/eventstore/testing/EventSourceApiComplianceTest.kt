@@ -6,22 +6,21 @@ import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.describedBy
 import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.has
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.EventSource
 import org.araqnid.eventstore.NewEvent
-import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.WrongExpectedVersionException
 import org.araqnid.eventstore.emptyStreamEventNumber
 import org.junit.Assert
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.stream.Collector
-import java.util.stream.Collectors
-import java.util.stream.Collectors.maxBy
-import java.util.stream.Stream
-import kotlin.streams.toList
 import kotlin.text.Charsets.UTF_8
 
 abstract class EventSourceApiComplianceTest {
@@ -71,10 +70,12 @@ abstract class EventSourceApiComplianceTest {
                         0L,
                         eventB)))
 
-        val position1 = eventSource.streamReader.readStreamForwards(stream0).map { it.position }.onlyElement()!!
-        val position2 = eventSource.streamReader.readStreamForwards(stream1).map { it.position }.onlyElement()!!
-        assertThat(position1, !equalTo(position2))
-        assertTrue(eventSource.streamReader.positionCodec.comparePositions(position1, position2) < 0)
+        runBlocking {
+            val position1 = eventSource.streamReader.readStreamForwards(stream0).map { it.position }.single()
+            val position2 = eventSource.streamReader.readStreamForwards(stream1).map { it.position }.single()
+            assertThat(position1, !equalTo(position2))
+            assertTrue(eventSource.streamReader.positionCodec.comparePositions(position1, position2) < 0)
+        }
     }
 
     @Test fun write_events_specifying_expected_version_number() {
@@ -197,7 +198,7 @@ abstract class EventSourceApiComplianceTest {
         eventSource.streamWriter.write(stream1, listOf(eventB))
         eventSource.streamWriter.write(stream2, listOf(eventC))
 
-        val position = eventSource.storeReader.readAllForwards().toListAndClose()[1].position
+        val position = runBlocking { eventSource.storeReader.readAllForwards().toList() }[1].position
 
         assertThat(eventSource.storeReader.readAllForwards(position).readEvents(),
                 containsOnly(eventRecord(
@@ -223,7 +224,7 @@ abstract class EventSourceApiComplianceTest {
         eventSource.streamWriter.write(stream1, listOf(eventB))
         eventSource.streamWriter.write(stream2, listOf(eventC))
 
-        val position = eventSource.storeReader.readAllForwards().toListAndClose().last().position
+        val position = runBlocking { eventSource.storeReader.readAllForwards().toList().last()  }.position
 
         assertThat(eventSource.storeReader.readAllForwards(position).readEvents(),
                 Matcher(Collection<EventRecord>::isEmpty))
@@ -280,7 +281,9 @@ abstract class EventSourceApiComplianceTest {
         eventSource.streamWriter.write(stream2, listOf(eventC))
         eventSource.streamWriter.write(stream3, listOf(eventD))
 
-        val position = eventSource.storeReader.readAllForwards().limit(1).map { re -> re.position }.collectAndClose(Collectors.maxBy(eventSource.storeReader.positionCodec::comparePositions)).get()
+        val position = runBlocking {
+            eventSource.storeReader.readAllForwards().first().position
+        }
 
         assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).readEvents(),
                 containsOnly(eventRecord(
@@ -311,7 +314,10 @@ abstract class EventSourceApiComplianceTest {
         eventSource.streamWriter.write(stream2, listOf(eventC))
         eventSource.streamWriter.write(stream3, listOf(eventD))
 
-        val position = eventSource.storeReader.readAllForwards().map { re -> re.position }.collectAndClose(maxBy(eventSource.storeReader.positionCodec::comparePositions)).get()
+        val position = runBlocking {
+            eventSource.storeReader.readAllForwards().map { re -> re.position }
+                .maxWith(Comparator(eventSource.storeReader.positionCodec::comparePositions))!!
+        }
 
         assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).readEvents(),
                 Matcher(Collection<EventRecord>::isEmpty))
@@ -338,15 +344,6 @@ private fun eventRecord(streamId: StreamId, eventNumber: Long, type: String, dat
 private val Blob.pretty: String
     get() = asCharSource(UTF_8).read()
 
-private fun <T> Stream<T>.onlyElement(): T? {
-    return use {
-        toList().single()
-    }
-}
-
-private fun <T, R> Stream<T>.collectAndClose(collector: Collector<in T, *, out R>): R = use { it.collect(collector) }
-private fun <T> Stream<T>.toListAndClose(): List<T> = use { it.toList() }
-private fun Stream<ResolvedEvent>.readEvents(): List<EventRecord> = map { it.event }.use { it.toList() }
 private inline fun <reified X : Throwable> assertThrows(crossinline body: () -> Unit) {
     Assert.assertThrows(X::class.java) { body() }
 }

@@ -1,6 +1,7 @@
 package org.araqnid.eventstore
 
-import java.util.stream.Stream
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 object EmptyEventSource : EventSource, EventReader, EventCategoryReader, EventStreamReader {
     private object EmptyPosition : Position, Comparable<EmptyPosition> {
@@ -24,14 +25,14 @@ object EmptyEventSource : EventSource, EventReader, EventCategoryReader, EventSt
     override val streamWriter: EventStreamWriter
         get() = throw UnsupportedOperationException()
 
-    override fun readAllForwards(after: Position): Stream<ResolvedEvent> = Stream.empty()
+    override fun readAllForwards(after: Position): Flow<ResolvedEvent> = emptyFlow()
     override val emptyStorePosition: Position
         get() = EmptyPosition
     override val positionCodec: PositionCodec
         get() = codec
 
-    override fun readCategoryForwards(category: String, after: Position): Stream<ResolvedEvent> = Stream.empty()
+    override fun readCategoryForwards(category: String, after: Position): Flow<ResolvedEvent> = emptyFlow()
     override fun emptyCategoryPosition(category: String): Position = EmptyPosition
 
-    override fun readStreamForwards(streamId: StreamId, after: Long): Stream<ResolvedEvent> = Stream.empty()
+    override fun readStreamForwards(streamId: StreamId, after: Long): Flow<ResolvedEvent> = emptyFlow()
 }

@@ -2,6 +2,11 @@ package org.araqnid.eventstore.filesystem
 
 import com.google.common.io.ByteSource
 import com.google.common.io.MoreFiles
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.stream.consumeAsFlow
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventCategoryReader
 import org.araqnid.eventstore.EventReader
@@ -29,7 +34,6 @@ import java.time.format.ResolverStyle
 import java.time.temporal.ChronoField
 import java.util.Comparator.comparing
 import java.util.regex.Pattern
-import java.util.stream.Stream
 import kotlin.streams.toList
 
 class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSource {
@@ -39,28 +43,30 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
     override val streamWriter: EventStreamWriter = StreamWriter()
 
     internal inner class StreamReader : EventStreamReader {
-        override fun readStreamForwards(streamId: StreamId, after: Long): Stream<ResolvedEvent> {
+        override fun readStreamForwards(streamId: StreamId, after: Long): Flow<ResolvedEvent> {
             val streamDirectory = streamDirectory(streamId)
             if (!Files.isDirectory(streamDirectory)) throw NoSuchStreamException(streamId)
             return Files.list(streamDirectory)
-                    .sorted(filenameComparator)
-                    .mapNotNull { readEvent(streamId, it) }
-                    .filter { it.event.eventNumber > after }
+                .sorted(filenameComparator)
+                .consumeAsFlow()
+                .mapNotNull { readEvent(streamId, it) }
+                .filter { it.event.eventNumber > after }
         }
 
         override val positionCodec = TieredFilesystemEventSource.positionCodec
     }
 
     internal inner class StoreReader : EventReader {
-        override fun readAllForwards(after: Position): Stream<ResolvedEvent> {
+        override fun readAllForwards(after: Position): Flow<ResolvedEvent> {
             val afterFilename = (after as FilesystemPosition).filename.toString()
             val categories = baseDirectory.listFiles()
             val streamDirectories = categories.flatMap { category -> category.listFiles() }
             return streamDirectories.stream()
-                    .flatMap { path -> Files.list(path) }
-                    .filter { p -> p.fileName.toString() > afterFilename }
-                    .sorted(filenameComparator)
-                    .mapNotNull { readEvent(it) }
+                .flatMap { path -> Files.list(path) }
+                .filter { p -> p.fileName.toString() > afterFilename }
+                .sorted(filenameComparator)
+                .consumeAsFlow()
+                .mapNotNull { readEvent(it) }
         }
 
         override val emptyStorePosition: Position = TieredFilesystemEventSource.emptyStorePosition
@@ -69,15 +75,16 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
     }
 
     internal inner class CategoryReader : EventCategoryReader {
-        override fun readCategoryForwards(category: String, after: Position): Stream<ResolvedEvent> {
+        override fun readCategoryForwards(category: String, after: Position): Flow<ResolvedEvent> {
             val afterFilename = (after as FilesystemPosition).filename.toString()
             val categoryDirectory = baseDirectory.resolve(encodeForFilename(category))
-            if (!Files.isDirectory(categoryDirectory)) return Stream.empty()
+            if (!Files.isDirectory(categoryDirectory)) return emptyFlow()
             return Files.list(categoryDirectory)
-                    .flatMap { path -> Files.list(path) }
-                    .filter { p -> p.fileName.toString() > afterFilename }
-                    .sorted(filenameComparator)
-                    .mapNotNull { readEvent(it) }
+                .flatMap { path -> Files.list(path) }
+                .filter { p -> p.fileName.toString() > afterFilename }
+                .sorted(filenameComparator)
+                .consumeAsFlow()
+                .mapNotNull { readEvent(it) }
         }
 
         override fun emptyCategoryPosition(category: String): Position = TieredFilesystemEventSource.emptyStorePosition

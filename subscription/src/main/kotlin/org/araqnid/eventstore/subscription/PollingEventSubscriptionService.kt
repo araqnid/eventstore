@@ -3,6 +3,8 @@ package org.araqnid.eventstore.subscription
 import com.google.common.annotations.VisibleForTesting
 import com.google.common.util.concurrent.AbstractScheduledService
 import com.google.common.util.concurrent.Service
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.runBlocking
 import org.araqnid.eventstore.EventReader
 import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.ResolvedEvent
@@ -42,8 +44,8 @@ class PollingEventSubscriptionService(val eventReader: EventReader, private val 
         var eventsRead = 0
         emitter.pollStarted(lastPosition)
         try {
-            eventReader.readAllForwards(lastPosition).use {
-                it.forEachOrdered { re ->
+            runBlocking {
+                eventReader.readAllForwards(lastPosition).collect { re ->
                     if (!isRunning) throw ConsumptionStoppedException()
                     try {
                         sink.accept(re)
@@ -53,7 +55,6 @@ class PollingEventSubscriptionService(val eventReader: EventReader, private val 
                         throw RuntimeException("Failed to process $re", e)
                     }
                 }
-
             }
             emitter.pollFinished(lastPosition, eventsRead)
         } catch (ignored: ConsumptionStoppedException) {

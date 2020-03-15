@@ -9,6 +9,8 @@ import com.natpryce.hamkrest.containsSubstring
 import com.natpryce.hamkrest.equalTo
 import com.natpryce.hamkrest.present
 import com.natpryce.hamkrest.sameInstance
+import kotlinx.coroutines.flow.count
+import kotlinx.coroutines.runBlocking
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.InMemoryEventSource
@@ -31,7 +33,6 @@ import org.mockito.junit.MockitoRule
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import java.util.Comparator.comparing
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Phaser
 import java.util.concurrent.Semaphore
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.text.Charsets.UTF_8
 
+@Suppress("UnstableApiUsage")
 class SnapshotEventSubscriptionServiceTest {
     @get:Rule val mockito: MockitoRule = MockitoJUnit.rule()
 
@@ -431,12 +433,13 @@ class SnapshotEventSubscriptionServiceTest {
     }
 
     private fun writeEvent(eventSource: InMemoryEventSource): ResolvedEvent {
-        val eventsWritten = eventSource.storeReader.readAllForwards(eventSource.storeReader.emptyStorePosition).count()
-        eventSource.write(StreamId("test", "test"),
+        return runBlocking {
+            val eventsWritten = eventSource.storeReader.readAllForwards(eventSource.storeReader.emptyStorePosition).count()
+            eventSource.write(StreamId("test", "test"),
                 listOf(NewEvent("Test", Blob.fromString(eventsWritten.toString(), UTF_8))))
-        return eventSource.storeReader.readAllForwards(eventSource.storeReader.emptyStorePosition)
-                .max(comparing<ResolvedEvent, Position>({ it.position }, { left, right -> eventSource.positionCodec.comparePositions(left, right) }))
-                .get()
+            eventSource.storeReader.readAllForwards(eventSource.storeReader.emptyStorePosition)
+                .maxWith(compareBy(Comparator(eventSource.positionCodec::comparePositions)) { it.position })!!
+        }
     }
 
     private fun beginStopping(service: Service) {

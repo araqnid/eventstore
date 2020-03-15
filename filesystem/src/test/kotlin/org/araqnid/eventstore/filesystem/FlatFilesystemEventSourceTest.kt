@@ -6,17 +6,15 @@ import com.natpryce.hamkrest.equalTo
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.EventSource
-import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.testing.EventSourceApiComplianceTest
+import org.araqnid.eventstore.testing.readEvents
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 import java.time.Clock
 import java.time.Instant
-import java.util.stream.Stream
-import kotlin.streams.toList
 import kotlin.text.Charsets.UTF_8
 
 class FlatFilesystemEventSourceTest : EventSourceApiComplianceTest() {
@@ -40,6 +38,4 @@ class FlatFilesystemEventSourceTest : EventSourceApiComplianceTest() {
         assertThat(eventSource.categoryReader.readCategoryForwards("category").readEvents(), equalTo(listOf(eventRecord)))
         assertThat(eventSource.streamReader.readStreamForwards(eventRecord.streamId).readEvents(), equalTo(listOf(eventRecord)))
     }
-
-    private fun Stream<ResolvedEvent>.readEvents(): List<EventRecord> = map { it.event }.use { it.toList() }
 }

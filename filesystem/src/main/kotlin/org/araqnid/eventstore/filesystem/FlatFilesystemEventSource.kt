@@ -1,6 +1,10 @@
 package org.araqnid.eventstore.filesystem
 
 import com.google.common.io.MoreFiles
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.stream.consumeAsFlow
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventCategoryReader
 import org.araqnid.eventstore.EventReader
@@ -37,12 +41,16 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
     override val streamWriter: EventStreamWriter = StreamWriter()
 
     internal inner class StoreReader : EventReader {
-        override fun readAllForwards(after: Position): Stream<ResolvedEvent> {
+        override fun readAllForwards(after: Position): Flow<ResolvedEvent> {
             val afterFilesystemPosition = after as FilesystemPosition
             return Files.list(baseDirectory)
-                    .filter { it.fileName.toString() > afterFilesystemPosition.filename && it.fileName.toString().endsWith(".data.json") }
-                    .sorted(Comparator.comparing<Path, String> { it.fileName.toString() })
-                    .mapNotNull { readEvent(it) }
+                .filter {
+                    it.fileName.toString() > afterFilesystemPosition.filename
+                            && it.fileName.toString().endsWith(".data.json")
+                }
+                .sorted(compareBy { it.fileName.toString() })
+                .consumeAsFlow()
+                .mapNotNull { readEvent(it) }
         }
 
         private fun readEvent(dataPath: Path): ResolvedEvent? {
@@ -68,7 +76,7 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
     }
 
     internal inner class CategoryReader : EventCategoryReader {
-        override fun readCategoryForwards(category: String, after: Position): Stream<ResolvedEvent> {
+        override fun readCategoryForwards(category: String, after: Position): Flow<ResolvedEvent> {
             return storeReader.readAllForwards(after).filter { it.event.streamId.category == category }
         }
 
@@ -77,7 +85,7 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
     }
 
     internal inner class StreamReader : EventStreamReader {
-        override fun readStreamForwards(streamId: StreamId, after: Long): Stream<ResolvedEvent> {
+        override fun readStreamForwards(streamId: StreamId, after: Long): Flow<ResolvedEvent> {
             return storeReader.readAllForwards().filter { it.event.streamId == streamId && it.event.eventNumber > after }
         }
         override val positionCodec: PositionCodec = FlatFilesystemEventSource.positionCodec

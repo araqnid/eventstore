@@ -13,11 +13,14 @@ import java.util.stream.StreamSupport
 
 internal fun <T> readPackFileEntries(path: Path, readEntry: (CpioArchiveEntry, InputStream) -> T): Stream<T> {
     val cpio = CpioArchiveInputStream(XZInputStream(Files.newInputStream(path)))
+    var closed = false
     val spliterator = object : Spliterator<T> {
         override fun tryAdvance(action: Consumer<in T>): Boolean {
+            if (closed) return false
             val entry: CpioArchiveEntry? = cpio.nextCPIOEntry
             if (entry == null) {
                 cpio.close()
+                closed = true
                 return false
             }
             action.accept(readEntry(entry, cpio))
@@ -30,5 +33,9 @@ internal fun <T> readPackFileEntries(path: Path, readEntry: (CpioArchiveEntry, I
 
         override fun characteristics() = Spliterator.ORDERED or Spliterator.DISTINCT or Spliterator.IMMUTABLE or Spliterator.NONNULL
     }
-    return StreamSupport.stream(spliterator, false).onClose { cpio.close() }
+
+    return StreamSupport.stream(spliterator, false).onClose {
+        closed = true
+        cpio.close()
+    }
 }

@@ -1,7 +1,7 @@
 package org.araqnid.eventstore
 
+import kotlinx.coroutines.flow.Flow
 import java.time.Instant
-import java.util.stream.Stream
 
 interface EventSource {
     val storeReader: EventReader
@@ -11,20 +11,20 @@ interface EventSource {
 }
 
 interface EventReader {
-    fun readAllForwards(after: Position = emptyStorePosition): Stream<ResolvedEvent>
+    fun readAllForwards(after: Position = emptyStorePosition): Flow<ResolvedEvent>
     val emptyStorePosition: Position
     val positionCodec: PositionCodec
 }
 
 interface EventCategoryReader {
-    fun readCategoryForwards(category: String, after: Position = emptyCategoryPosition(category)): Stream<ResolvedEvent>
+    fun readCategoryForwards(category: String, after: Position = emptyCategoryPosition(category)): Flow<ResolvedEvent>
     fun emptyCategoryPosition(category: String): Position
     val positionCodec: PositionCodec
 }
 
 interface EventStreamReader {
     @Throws(NoSuchStreamException::class)
-    fun readStreamForwards(streamId: StreamId, after: Long = emptyStreamEventNumber): Stream<ResolvedEvent>
+    fun readStreamForwards(streamId: StreamId, after: Long = emptyStreamEventNumber): Flow<ResolvedEvent>
     val positionCodec: PositionCodec
 }
 

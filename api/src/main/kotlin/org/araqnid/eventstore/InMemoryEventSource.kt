@@ -1,9 +1,11 @@
 package org.araqnid.eventstore
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filter
 import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.stream.Stream
 
 class InMemoryEventSource(val clock: Clock) : EventSource, EventReader, EventCategoryReader, EventStreamReader, EventStreamWriter {
     companion object {
@@ -29,18 +31,18 @@ class InMemoryEventSource(val clock: Clock) : EventSource, EventReader, EventCat
 
     override fun emptyCategoryPosition(category: String): Position = emptyStorePosition
 
-    override fun readAllForwards(after: Position): Stream<ResolvedEvent> {
-        return content.subList((after as InMemoryPosition).index + 1, content.size).stream()
+    override fun readAllForwards(after: Position): Flow<ResolvedEvent> {
+        return content.subList((after as InMemoryPosition).index + 1, content.size).asFlow()
     }
 
-    override fun readCategoryForwards(category: String, after: Position): Stream<ResolvedEvent> {
+    override fun readCategoryForwards(category: String, after: Position): Flow<ResolvedEvent> {
         return readAllForwards(after).filter { it.event.streamId.category == category }
     }
 
-    override fun readStreamForwards(streamId: StreamId, after: Long): Stream<ResolvedEvent> {
+    override fun readStreamForwards(streamId: StreamId, after: Long): Flow<ResolvedEvent> {
         if (content.find { it.event.streamId == streamId } == null)
             throw NoSuchStreamException(streamId)
-        return content.filter { it.event.streamId == streamId && it.event.eventNumber > after }.stream()
+        return content.filter { it.event.streamId == streamId && it.event.eventNumber > after }.asFlow()
     }
 
     @Synchronized
