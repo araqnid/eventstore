@@ -2,13 +2,16 @@ package org.araqnid.eventstore.filesystem.flatpack
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.google.common.io.ByteStreams
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.stream.consumeAsFlow
+import kotlinx.coroutines.flow.flowOn
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventReader
 import org.araqnid.eventstore.EventRecord
@@ -19,7 +22,6 @@ import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
-import java.util.stream.Stream
 import kotlin.streams.toList
 
 class FlatPackFilesystemEventReader(val baseDirectory: Path, private val lockable: Lockable) : EventReader {
@@ -34,20 +36,22 @@ class FlatPackFilesystemEventReader(val baseDirectory: Path, private val lockabl
                 val packFiles = filesAfter(pos)
                     .filter { it.isPackFile() }
                     .sortedWith(sortByFilename)
-                if (packFiles.isEmpty()) {
-                    emitAll(filesAfter(pos)
-                        .filter { it.isLooseFile() }
-                        .sortedWith(sortByFilename)
-                        .map { looseFile(it) }
-                        .asFlow())
-                } else {
-                    val latestPackFile = packFiles[packFiles.size - 1]
-                    for (path in filesAfter(pos)
-                        .filter { it.isPackFile() || it.isLooseFile() && it.fileName.toString() > latestPackFile.fileName.toString() }
-                        .sortedWith(sortByFilename)) {
-                        emitAll(pathToEvents(path, pos))
+                emitAll(
+                    if (packFiles.isEmpty()) {
+                        filesAfter(pos)
+                            .filter { it.isLooseFile() }
+                            .sortedWith(sortByFilename)
+                            .map { looseFile(it) }
+                            .asFlow()
+                    } else {
+                        val latestPackFile = packFiles[packFiles.size - 1]
+                        filesAfter(pos)
+                            .filter { it.isPackFile() || it.isLooseFile() && it.fileName.toString() > latestPackFile.fileName.toString() }
+                            .sortedWith(sortByFilename)
+                            .asFlow()
+                            .flatMapConcat { pathToEvents(it, pos) }
                     }
-                }
+                )
             }
         }
     }
@@ -59,7 +63,7 @@ class FlatPackFilesystemEventReader(val baseDirectory: Path, private val lockabl
 
     private fun pathToEvents(path: Path, pos: FlatPackFilesystemPosition): Flow<ResolvedEvent> {
         return when {
-            path.isPackFile() -> unpack(path, pos).consumeAsFlow()
+            path.isPackFile() -> unpack(path, pos)
             path.isLooseFile() -> flowOf(looseFile(path))
             else -> emptyFlow()
         }
@@ -71,13 +75,20 @@ class FlatPackFilesystemEventReader(val baseDirectory: Path, private val lockabl
         return makeEvent(filename, data).toResolvedEvent(LooseFile(filename))
     }
 
-    private fun unpack(path: Path, pos: FlatPackFilesystemPosition): Stream<ResolvedEvent> {
+    private fun unpack(path: Path, pos: FlatPackFilesystemPosition): Flow<ResolvedEvent> {
         val packFileName = path.fileName.toString()
         return readPackFileEntries(path) { entry, stream ->
             val data = ByteArray(entry.size.toInt())
             ByteStreams.readFully(stream, data)
             makeEvent(entry.name, data).toResolvedEvent(PackedFile(packFileName, entry.name))
-        }.filter { re: ResolvedEvent -> pos == emptyStorePosition || codec.comparePositions(re.position, pos) > 0 }
+        }.flowOn(Dispatchers.IO).filterAfter(pos)
+    }
+
+    private fun Flow<ResolvedEvent>.filterAfter(pos: FlatPackFilesystemPosition): Flow<ResolvedEvent> {
+        return if (pos == emptyStorePosition)
+            this
+        else
+            filter { (position) -> codec.comparePositions(position, pos) > 0 }
     }
 
     private fun makeEvent(filename: String, data: ByteArray): EventRecord {

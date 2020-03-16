@@ -2,6 +2,8 @@ package org.araqnid.eventstore.filesystem.flatpack
 
 import com.google.common.io.LineProcessor
 import com.google.common.io.MoreFiles
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.runBlocking
 import org.araqnid.eventstore.EventStreamWriter
 import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.StreamId
@@ -119,8 +121,8 @@ class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Cl
                     val manifestPath = path.resolveSibling(path.fileName.toString().removeSuffix(".cpio.xz") + ".manifest")
                     if (!Files.exists(manifestPath)) {
                         val streams = HashMap<StreamId, Long>()
-                        readPackFileEntries(path) { entry, _ -> entry.name }.use {
-                            it.forEachOrdered { filename ->
+                        runBlocking {
+                            readPackFileEntries(path) { entry, _ -> entry.name }.collect { filename ->
                                 val matcher = filenamePattern.matcher(filename.toString())
                                 if (!matcher.matches()) throw RuntimeException("Unparseable filename in pack $path: $filename")
                                 val category = matcher.group(2)
