@@ -23,12 +23,12 @@ fun <T> positionCodecOfComparable(clazz: Class<T>, encoder: (T) -> String, decod
 
 inline fun <reified T> positionCodecOfComparable(crossinline encoder: (T) -> String, crossinline decoder: (String) -> T): PositionCodec where T : Position, T: Comparable<T> {
     return object : PositionCodec {
-        override fun encode(position: Position): String = encoder(T::class.java.cast(position))
+        override fun encode(position: Position): String = encoder(position as T)
         override fun decode(encoded: String): Position = decoder(encoded)
 
         override fun comparePositions(left: Position, right: Position): Int {
-            val leftT = T::class.java.cast(left)
-            val rightT = T::class.java.cast(right)
+            val leftT = left as T
+            val rightT = right as T
             return leftT.compareTo(rightT)
         }
     }
@@ -49,12 +49,12 @@ fun <T : Position> positionCodecFromComparator(clazz: Class<T>, encoder: (T) -> 
 
 inline fun <reified T : Position> positionCodecFromComparator(crossinline encoder: (T) -> String, crossinline decoder: (String) -> T, comparator: Comparator<T>): PositionCodec {
     return object : PositionCodec {
-        override fun encode(position: Position): String = encoder(T::class.java.cast(position))
+        override fun encode(position: Position): String = encoder(position as T)
         override fun decode(encoded: String): Position = decoder(encoded)
 
         override fun comparePositions(left: Position, right: Position): Int {
-            val leftT = T::class.java.cast(left)
-            val rightT = T::class.java.cast(right)
+            val leftT = left as T
+            val rightT = right as T
             return comparator.compare(leftT, rightT)
         }
     }
