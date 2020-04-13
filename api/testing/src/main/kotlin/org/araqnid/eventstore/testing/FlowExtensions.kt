@@ -8,7 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.ResolvedEvent
 
-suspend fun <T> Flow<T>.maxWith(comparator: Comparator<T>): T? {
+suspend fun <T> Flow<T>.maxWith(comparator: Comparator<in T>): T? {
     var maxValue: T? = null
     collect { value ->
         maxValue = maxValue?.let {

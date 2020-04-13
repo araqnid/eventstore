@@ -34,7 +34,7 @@ inline fun <reified T> positionCodecOfComparable(crossinline encoder: (T) -> Str
     }
 }
 
-fun <T : Position> positionCodecFromComparator(clazz: Class<T>, encoder: (T) -> String, decoder: (String) -> T, comparator: Comparator<T>): PositionCodec {
+fun <T : Position> positionCodecFromComparator(clazz: Class<T>, encoder: (T) -> String, decoder: (String) -> T, comparator: Comparator<in T>): PositionCodec {
     return object : PositionCodec {
         override fun encode(position: Position): String = encoder(clazz.cast(position))
         override fun decode(encoded: String): Position = decoder(encoded)
@@ -47,7 +47,7 @@ fun <T : Position> positionCodecFromComparator(clazz: Class<T>, encoder: (T) -> 
     }
 }
 
-inline fun <reified T : Position> positionCodecFromComparator(crossinline encoder: (T) -> String, crossinline decoder: (String) -> T, comparator: Comparator<T>): PositionCodec {
+inline fun <reified T : Position> positionCodecFromComparator(crossinline encoder: (T) -> String, crossinline decoder: (String) -> T, comparator: Comparator<in T>): PositionCodec {
     return object : PositionCodec {
         override fun encode(position: Position): String = encoder(position as T)
         override fun decode(encoded: String): Position = decoder(encoded)
