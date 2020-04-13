@@ -11,7 +11,7 @@ object EmptyEventSource : EventSource, EventReader, EventCategoryReader, EventSt
         override fun toString(): String = "EmptyPosition"
     }
 
-    val codec = positionCodecOfComparable(
+    override val positionCodec: PositionCodec = positionCodecOfComparable(
             { "" },
             { EmptyPosition }
     )
@@ -28,8 +28,6 @@ object EmptyEventSource : EventSource, EventReader, EventCategoryReader, EventSt
     override fun readAllForwards(after: Position): Flow<ResolvedEvent> = emptyFlow()
     override val emptyStorePosition: Position
         get() = EmptyPosition
-    override val positionCodec: PositionCodec
-        get() = codec
 
     override fun readCategoryForwards(category: String, after: Position): Flow<ResolvedEvent> = emptyFlow()
     override fun emptyCategoryPosition(category: String): Position = EmptyPosition
