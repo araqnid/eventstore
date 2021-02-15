@@ -51,6 +51,13 @@ tasks {
 }
 
 publishing {
+    publications {
+        register<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifactId = "eventstore${project.path.replace(':', '-')}"
+        }
+    }
+
     repositories {
         maven(url = "https://maven.pkg.github.com/araqnid/eventstore") {
             name = "github"
