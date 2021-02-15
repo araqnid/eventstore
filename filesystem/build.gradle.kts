@@ -37,9 +37,14 @@ tasks {
         }
     }
 
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         kotlinOptions {
             jvmTarget = "1.8"
+        }
+    }
+    withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().configureEach {
+        kotlinOptions {
+            freeCompilerArgs += listOf("-Xopt-in=kotlinx.coroutines.FlowPreview")
         }
     }
 }
