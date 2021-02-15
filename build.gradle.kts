@@ -15,13 +15,11 @@ subprojects {
     repositories {
         mavenCentral()
 
-        repositories {
-            if (isGithubUserAvailable(project)) {
-                for (repo in listOf("assert-that")) {
-                    maven(url = "https://maven.pkg.github.com/araqnid/$repo") {
-                        name = "github-$repo"
-                        credentials(githubUserCredentials(project))
-                    }
+        if (isGithubUserAvailable(project)) {
+            for (repo in listOf("assert-that")) {
+                maven(url = "https://maven.pkg.github.com/araqnid/$repo") {
+                    name = "github-$repo"
+                    credentials(githubUserCredentials(project))
                 }
             }
         }
