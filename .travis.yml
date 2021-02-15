@@ -1,6 +1,6 @@
 language: java
 jdk:
- - openjdk11
+ - openjdk12
 env:
  global:
   - GITHUB_ACTOR=araqnid
