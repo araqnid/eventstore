@@ -17,7 +17,7 @@ abstract class FilesystemSnapshotPersister(val baseDirectory: Path, private val 
     private val random = SecureRandom()
 
     override fun load(): Position? {
-        val latestFile = snapshotFiles().maxBy { it.timestamp }
+        val latestFile = snapshotFiles().maxByOrNull { it.timestamp }
         if (latestFile == null) {
             logger.info("No snapshot files")
             return null
