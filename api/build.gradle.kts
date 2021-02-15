@@ -11,7 +11,6 @@ dependencies {
     api(kotlin("stdlib-jdk8"))
     testImplementation(kotlin("test-junit"))
     testImplementation("junit:junit:4.13")
-    testImplementation("com.natpryce:hamkrest:${LibraryVersions.hamkrest}")
     testImplementation(project(":api:testing"))
 }
 

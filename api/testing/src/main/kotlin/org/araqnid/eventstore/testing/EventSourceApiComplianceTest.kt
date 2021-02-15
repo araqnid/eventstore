@@ -1,11 +1,5 @@
 package org.araqnid.eventstore.testing
 
-import com.natpryce.hamkrest.Matcher
-import com.natpryce.hamkrest.and
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.describedBy
-import com.natpryce.hamkrest.equalTo
-import com.natpryce.hamkrest.has
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
@@ -18,6 +12,15 @@ import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.WrongExpectedVersionException
 import org.araqnid.eventstore.emptyStreamEventNumber
+import org.araqnid.kotlin.assertthat.Matcher
+import org.araqnid.kotlin.assertthat.and
+import org.araqnid.kotlin.assertthat.assertThat
+import org.araqnid.kotlin.assertthat.containsInOrder
+import org.araqnid.kotlin.assertthat.containsOnly
+import org.araqnid.kotlin.assertthat.describedBy
+import org.araqnid.kotlin.assertthat.emptyCollection
+import org.araqnid.kotlin.assertthat.equalTo
+import org.araqnid.kotlin.assertthat.has
 import org.junit.Assert
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -151,8 +154,7 @@ abstract class EventSourceApiComplianceTest {
                 jsonBlob("B-metadata"))
         eventSource.streamWriter.write(streamId, listOf(eventA, eventB))
 
-        assertThat(eventSource.streamReader.readStreamForwards(streamId, 1).readEvents(),
-                Matcher(Collection<EventRecord>::isEmpty))
+        assertThat(eventSource.streamReader.readStreamForwards(streamId, 1).readEvents(), emptyCollection)
     }
 
     @Test fun read_all_events() {
@@ -226,8 +228,7 @@ abstract class EventSourceApiComplianceTest {
 
         val position = runBlocking { eventSource.storeReader.readAllForwards().toList().last()  }.position
 
-        assertThat(eventSource.storeReader.readAllForwards(position).readEvents(),
-                Matcher(Collection<EventRecord>::isEmpty))
+        assertThat(eventSource.storeReader.readAllForwards(position).readEvents(), emptyCollection)
     }
 
     @Test fun read_category_events() {
@@ -319,8 +320,7 @@ abstract class EventSourceApiComplianceTest {
                 .maxWith(Comparator(eventSource.storeReader.positionCodec::comparePositions))!!
         }
 
-        assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).readEvents(),
-                Matcher(Collection<EventRecord>::isEmpty))
+        assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).readEvents(), emptyCollection)
     }
 }
 

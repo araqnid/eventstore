@@ -1,14 +1,14 @@
 package org.araqnid.eventstore.filesystem
 
 import com.google.common.io.MoreFiles
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.equalTo
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.EventSource
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.testing.EventSourceApiComplianceTest
 import org.araqnid.eventstore.testing.readEvents
+import org.araqnid.kotlin.assertthat.assertThat
+import org.araqnid.kotlin.assertthat.equalTo
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder

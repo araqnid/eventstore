@@ -8,7 +8,7 @@ dependencies {
     api(project(":api"))
     api(kotlin("test-junit"))
     api("junit:junit:4.13")
-    implementation("com.natpryce:hamkrest:${LibraryVersions.hamkrest}")
+    implementation("org.araqnid.kotlin.assert-that:assert-that:${LibraryVersions.assertThat}")
 }
 
 java {

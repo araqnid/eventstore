@@ -18,7 +18,7 @@ dependencies {
     testImplementation("junit:junit:4.13")
     testImplementation("org.mockito:mockito-core:3.2.4")
     testImplementation("com.timgroup:clocks-testing:1.0.1070")
-    testImplementation("com.natpryce:hamkrest:${LibraryVersions.hamkrest}")
+    testImplementation("org.araqnid.kotlin.assert-that:assert-that:${LibraryVersions.assertThat}")
 }
 
 java {

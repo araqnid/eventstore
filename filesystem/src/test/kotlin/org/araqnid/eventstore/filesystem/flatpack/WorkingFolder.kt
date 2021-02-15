@@ -1,11 +1,12 @@
 package org.araqnid.eventstore.filesystem.flatpack
 
 import com.google.common.io.MoreFiles
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.hasElement
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry
 import org.apache.commons.compress.archivers.cpio.CpioArchiveOutputStream
 import org.araqnid.eventstore.testutil.NIOTemporaryFolder
+import org.araqnid.kotlin.assertthat.assertThat
+import org.araqnid.kotlin.assertthat.containsTheItem
+import org.araqnid.kotlin.assertthat.equalTo
 import java.nio.file.Files
 import kotlin.streams.toList
 import kotlin.text.Charsets.UTF_8
@@ -32,7 +33,7 @@ internal fun CpioArchiveOutputStream.addEntry(name: String, content: String) {
 
 
 internal fun NIOTemporaryFolder.textFileContent(filename: String): String {
-    assertThat(files(), hasElement(filename))
+    assertThat(files(), containsTheItem(equalTo(filename)))
     return Files.readAllLines(root.resolve(filename), UTF_8).joinToString("\n")
 }
 

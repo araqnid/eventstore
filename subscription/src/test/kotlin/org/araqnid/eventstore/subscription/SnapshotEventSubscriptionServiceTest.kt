@@ -3,12 +3,6 @@ package org.araqnid.eventstore.subscription
 import com.google.common.util.concurrent.Monitor
 import com.google.common.util.concurrent.MoreExecutors.directExecutor
 import com.google.common.util.concurrent.Service
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.cast
-import com.natpryce.hamkrest.containsSubstring
-import com.natpryce.hamkrest.equalTo
-import com.natpryce.hamkrest.present
-import com.natpryce.hamkrest.sameInstance
 import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.runBlocking
 import org.araqnid.eventstore.Blob
@@ -18,6 +12,11 @@ import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
+import org.araqnid.kotlin.assertthat.assertThat
+import org.araqnid.kotlin.assertthat.containsSubstring
+import org.araqnid.kotlin.assertthat.equalTo
+import org.araqnid.kotlin.assertthat.present
+import org.araqnid.kotlin.assertthat.sameInstance
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
@@ -335,7 +334,7 @@ class SnapshotEventSubscriptionServiceTest {
         `when`(snapshotPersister.load()).thenThrow(snapshotFailure)
         val expectedFailure = attemptStartExpectingFailure(snapshotEventSubscriptionService)
 
-        assertThat(expectedFailure.cause, present(cast(sameInstance(snapshotFailure))))
+        assertThat(expectedFailure.cause, present(sameInstance(snapshotFailure)))
         val inOrder = inOrder(snapshotPersister, subscriptionListener, serviceListener, sink)
         inOrder.verify(subscriptionListener).loadingSnapshot()
         inOrder.verify(snapshotPersister).load()

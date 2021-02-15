@@ -1,8 +1,8 @@
 package org.araqnid.eventstore.subscription
 
-import com.natpryce.hamkrest.assertion.assertThat
-import com.natpryce.hamkrest.equalTo
 import com.timgroup.clocks.testing.ManualClock
+import org.araqnid.kotlin.assertthat.assertThat
+import org.araqnid.kotlin.assertthat.equalTo
 import org.junit.Test
 import java.time.Clock
 import java.time.Duration

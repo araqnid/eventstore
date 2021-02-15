@@ -22,8 +22,8 @@ dependencies {
     testImplementation("junit:junit:4.13")
     testImplementation(project(":api:testing"))
     testImplementation("com.timgroup:clocks-testing:1.0.1070")
-    testImplementation("com.natpryce:hamkrest:${LibraryVersions.hamkrest}")
-    testImplementation("org.araqnid:hamkrest-json:1.0.3")
+    testImplementation("org.araqnid.kotlin.assert-that:assert-that:${LibraryVersions.assertThat}")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${LibraryVersions.serialization}")
 }
 
 java {
