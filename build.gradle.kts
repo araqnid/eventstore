@@ -11,6 +11,6 @@ allprojects {
         version = "${versionPrefix}.${buildNumber}"
 
     repositories {
-        jcenter()
+        mavenCentral()
     }
 }

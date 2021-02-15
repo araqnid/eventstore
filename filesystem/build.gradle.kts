@@ -4,6 +4,10 @@ plugins {
     `java-library`
 }
 
+repositories {
+    jcenter()
+}
+
 dependencies {
     api(project(":api"))
     implementation("org.slf4j:slf4j-api:${LibraryVersions.slf4j}")
