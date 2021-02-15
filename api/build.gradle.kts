@@ -2,7 +2,6 @@ plugins {
     kotlin("jvm")
     `maven-publish`
     `java-library`
-    id("com.jfrog.bintray")
 }
 
 dependencies {
@@ -47,18 +46,14 @@ publishing {
     }
 }
 
-bintray {
-    user = (project.properties["bintray.user"] ?: "").toString()
-    key = (project.properties["bintray.apiKey"] ?: "").toString()
-    publish = true
-    setPublications("mavenJava")
-    pkg.repo = "maven"
-    pkg.name = "eventstore"
-    pkg.setLicenses("Apache-2.0")
-    pkg.vcsUrl = "https://github.com/araqnid/eventstore"
-    pkg.desc = "Store and replay sequences of events"
-    if (version != Project.DEFAULT_VERSION) {
-        pkg.version.name = version.toString()
-        pkg.version.vcsTag = "v$version"
+publishing {
+    repositories {
+        maven(url = "https://maven.pkg.github.com/araqnid/eventstore") {
+            name = "github"
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }

@@ -1,6 +1,5 @@
 plugins {
     kotlin("jvm") version "1.3.70" apply false
-    id("com.jfrog.bintray") version "1.8.4" apply false
 }
 
 val buildNumber: String? = System.getenv("BUILD_NUMBER")
