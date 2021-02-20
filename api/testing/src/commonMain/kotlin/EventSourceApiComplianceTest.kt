@@ -28,7 +28,7 @@ import org.araqnid.kotlin.assertthat.has
 import org.araqnid.kotlin.assertthat.lessThan
 import kotlin.test.fail
 
-expect abstract class EventSourceApiComplianceTest {
+expect abstract class EventSourceApiComplianceTest() {
     abstract val eventSource: EventSource
 }
 
