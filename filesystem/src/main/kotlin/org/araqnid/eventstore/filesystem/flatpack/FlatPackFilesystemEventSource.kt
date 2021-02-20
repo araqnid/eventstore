@@ -2,6 +2,9 @@ package org.araqnid.eventstore.filesystem.flatpack
 
 import com.google.common.io.MoreFiles
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.stream.consumeAsFlow
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry
 import org.apache.commons.compress.archivers.cpio.CpioArchiveOutputStream
 import org.araqnid.eventstore.EventReader
@@ -20,8 +23,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.security.SecureRandom
 import java.time.Clock
 import java.time.Instant
-import java.util.stream.Stream
-import kotlin.streams.toList
 import kotlin.text.Charsets.UTF_8
 
 class FlatPackFilesystemEventSource(val clock: Clock, val baseDirectory: Path) : EventSource {
@@ -51,27 +52,25 @@ class FlatPackFilesystemEventSource(val clock: Clock, val baseDirectory: Path) :
             val packedLooseFiles = ArrayList<Path>()
             val streamPositions = HashMap<StreamId, Long>()
             CpioArchiveOutputStream(XZOutputStream(Files.newOutputStream(tempFile, CREATE_NEW), LZMA2Options(1))).use { cpio ->
-                Files.list(baseDirectory).use { existingFiles: Stream<Path> ->
-                    val looseFiles = existingFiles.filter { it.isLooseFile() }
-                            .sorted(sortByFilename)
-                            .toList()
-                    looseFiles.forEach { looseFile ->
-                        val entry = CpioArchiveEntry(looseFile.fileName.toString())
-                        val attributes = Files.readAttributes(looseFile, BasicFileAttributes::class.java)
-                        entry.size = attributes.size()
-                        cpio.putArchiveEntry(entry)
-                        cpio.write(Files.readAllBytes(looseFile))
-                        cpio.closeArchiveEntry()
-                        val matcher = filenamePattern.matchEntire(looseFile.fileName.toString()) ?: error("Unparseable filename: $looseFile")
-                        latestTimestamp = Instant.parse(matcher.groupValues[1])
+                runBlocking {
+                    Files.list(baseDirectory).consumeAsFlow().filter { it.isLooseFile() }.toList()
+                }.sortedWith(sortByFilename).forEach { looseFile ->
+                    val entry = CpioArchiveEntry(looseFile.fileName.toString())
+                    val attributes = Files.readAttributes(looseFile, BasicFileAttributes::class.java)
+                    entry.size = attributes.size()
+                    cpio.putArchiveEntry(entry)
+                    cpio.write(Files.readAllBytes(looseFile))
+                    cpio.closeArchiveEntry()
+                    val matcher = filenamePattern.matchEntire(looseFile.fileName.toString())
+                        ?: error("Unparseable filename: $looseFile")
+                    latestTimestamp = Instant.parse(matcher.groupValues[1])
 
-                        val category = matcher.groupValues[2]
-                        val streamId = matcher.groupValues[3]
-                        val eventNumber = matcher.groupValues[4].toLong()
-                        streamPositions[StreamId(category, streamId)] = eventNumber
+                    val category = matcher.groupValues[2]
+                    val streamId = matcher.groupValues[3]
+                    val eventNumber = matcher.groupValues[4].toLong()
+                    streamPositions[StreamId(category, streamId)] = eventNumber
 
-                        packedLooseFiles.add(looseFile)
-                    }
+                    packedLooseFiles.add(looseFile)
                 }
             }
             if (latestTimestamp != null && packedLooseFiles.size >= packMinimumFiles) {

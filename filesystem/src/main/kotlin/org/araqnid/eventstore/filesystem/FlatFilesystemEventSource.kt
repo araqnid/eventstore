@@ -4,6 +4,7 @@ import com.google.common.io.MoreFiles
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.stream.consumeAsFlow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -28,7 +29,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.ResolverStyle
 import java.time.temporal.ChronoField
-import java.util.stream.Collectors.maxBy
 
 class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock = Clock.System) : EventSource {
     override val storeReader: EventReader = StoreReader()
@@ -92,10 +92,12 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock = Cloc
         }
 
         override fun lastEventNumber(streamId: StreamId): Long {
-            return Files.list(baseDirectory)
+            return runBlocking {
+                Files.list(baseDirectory)
+                    .consumeAsFlow()
                     .mapNotNull { path -> eventNumber(path.fileName.toString(), streamId) }
-                    .collectAndClose(maxBy(naturalOrder()))
-                    .orElse(emptyStreamEventNumber)
+                    .maxOrNull() ?: emptyStreamEventNumber
+            }
         }
 
         private fun eventNumber(filename: String, matchStreamId: StreamId): Long? {

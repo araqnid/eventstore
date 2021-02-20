@@ -1,5 +1,9 @@
 package org.araqnid.eventstore.subscription
 
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.stream.consumeAsFlow
 import org.araqnid.eventstore.Position
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -9,7 +13,6 @@ import java.security.SecureRandom
 import java.time.Clock
 import java.time.Instant
 import java.util.regex.Pattern
-import kotlin.streams.toList
 
 abstract class FilesystemSnapshotPersister(val baseDirectory: Path, private val fileExtension: String, val clock: Clock) : SnapshotPersister {
     private val logger = LoggerFactory.getLogger(FilesystemSnapshotPersister::class.java)
@@ -81,12 +84,16 @@ abstract class FilesystemSnapshotPersister(val baseDirectory: Path, private val 
     @Throws(IOException::class)
     abstract fun saveSnapshotFile(path: Path): Position
 
-    private fun snapshotFiles(): List<FileInfo> = Files.list(baseDirectory).use { it.toList() }.mapNotNull(this::snapshotFileInfo)
-
-    private fun snapshotFileInfo(path: Path): FileInfo? {
-        val matcher = filePattern.matchEntire(path.fileName.toString()) ?: return null
-        val timestamp = Instant.parse(matcher.groupValues[1])
-        return FileInfo(path, timestamp)
+    private fun snapshotFiles(): List<FileInfo> = runBlocking {
+        Files.list(baseDirectory).consumeAsFlow()
+            .transform { path ->
+                val matchResult = filePattern.matchEntire(path.fileName.toString())
+                if (matchResult != null) {
+                    val timestamp = Instant.parse(matchResult.groupValues[1])
+                    emit(FileInfo(path, timestamp))
+                }
+            }
+            .toList()
     }
 
     private data class FileInfo(val path: Path, val timestamp: Instant)
