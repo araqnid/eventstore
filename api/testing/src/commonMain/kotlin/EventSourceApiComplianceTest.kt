@@ -2,7 +2,6 @@ package org.araqnid.eventstore.testing
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.toList
@@ -287,112 +286,6 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         val position = eventSource.storeReader.readAllForwards().toList().last().position
 
         assertThat(eventSource.storeReader.readAllForwards(position).readEvents(), emptyCollection)
-    }
-
-    suspend fun read_category_events() {
-        val stream0 = StreamId("alpha", "1")
-        val stream1 = StreamId("beta", "1")
-        val stream2 = StreamId("gamma", "1")
-        val stream3 = StreamId("alpha", "2")
-        val eventA = NewEvent("type-A",
-            jsonBlob("A-data"),
-            jsonBlob("A-metadata")
-        )
-        val eventB = NewEvent("type-B",
-            jsonBlob("B-data"),
-            jsonBlob("B-metadata")
-        )
-        val eventC = NewEvent("type-C",
-            jsonBlob("C-data"),
-            jsonBlob("C-metadata")
-        )
-        val eventD = NewEvent("type-D",
-            jsonBlob("D-data"),
-            jsonBlob("D-metadata")
-        )
-        eventSource.streamWriter.write(stream0, listOf(eventA))
-        eventSource.streamWriter.write(stream1, listOf(eventB))
-        eventSource.streamWriter.write(stream2, listOf(eventC))
-        eventSource.streamWriter.write(stream3, listOf(eventD))
-
-        assertThat(eventSource.categoryReader.readCategoryForwards("alpha").readEvents(),
-            containsInOrder(
-                eventRecord(
-                    stream0,
-                    0,
-                    eventA), eventRecord(stream3, 0, eventD)
-            )
-        )
-    }
-
-    suspend fun read_category_events_from_position() {
-        val stream0 = StreamId("alpha", "1")
-        val stream1 = StreamId("beta", "1")
-        val stream2 = StreamId("gamma", "1")
-        val stream3 = StreamId("alpha", "2")
-        val eventA = NewEvent("type-A",
-            jsonBlob("A-data"),
-            jsonBlob("A-metadata")
-        )
-        val eventB = NewEvent("type-B",
-            jsonBlob("B-data"),
-            jsonBlob("B-metadata")
-        )
-        val eventC = NewEvent("type-C",
-            jsonBlob("C-data"),
-            jsonBlob("C-metadata")
-        )
-        val eventD = NewEvent("type-D",
-            jsonBlob("D-data"),
-            jsonBlob("D-metadata")
-        )
-        eventSource.streamWriter.write(stream0, listOf(eventA))
-        eventSource.streamWriter.write(stream1, listOf(eventB))
-        eventSource.streamWriter.write(stream2, listOf(eventC))
-        eventSource.streamWriter.write(stream3, listOf(eventD))
-
-        val position = eventSource.storeReader.readAllForwards().first().position
-
-        assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).readEvents(),
-            containsOnly(
-                eventRecord(
-                    stream3,
-                    0,
-                    eventD)
-            )
-        )
-    }
-
-    suspend fun read_empty_after_end_of_category() {
-        val stream0 = StreamId("alpha", "1")
-        val stream1 = StreamId("beta", "1")
-        val stream2 = StreamId("gamma", "1")
-        val stream3 = StreamId("alpha", "2")
-        val eventA = NewEvent("type-A",
-            jsonBlob("A-data"),
-            jsonBlob("A-metadata")
-        )
-        val eventB = NewEvent("type-B",
-            jsonBlob("B-data"),
-            jsonBlob("B-metadata")
-        )
-        val eventC = NewEvent("type-C",
-            jsonBlob("C-data"),
-            jsonBlob("C-metadata")
-        )
-        val eventD = NewEvent("type-D",
-            jsonBlob("D-data"),
-            jsonBlob("D-metadata")
-        )
-        eventSource.streamWriter.write(stream0, listOf(eventA))
-        eventSource.streamWriter.write(stream1, listOf(eventB))
-        eventSource.streamWriter.write(stream2, listOf(eventC))
-        eventSource.streamWriter.write(stream3, listOf(eventD))
-
-        val position = eventSource.storeReader.readAllForwards().map { re -> re.position }
-            .maxWithOrNull(Comparator(eventSource.storeReader.positionCodec::comparePositions))!!
-
-        assertThat(eventSource.categoryReader.readCategoryForwards("alpha", position).readEvents(), emptyCollection)
     }
 }
 

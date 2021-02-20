@@ -3,7 +3,7 @@ package org.araqnid.eventstore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
-object EmptyEventSource : EventSource, EventReader, EventCategoryReader, EventStreamReader {
+object EmptyEventSource : EventSource, EventReader, EventStreamReader {
     private object EmptyPosition : Position, Comparable<EmptyPosition> {
         override fun compareTo(other: EmptyPosition): Int = 0
         override fun equals(other: Any?): Boolean = other is EmptyPosition
@@ -18,8 +18,6 @@ object EmptyEventSource : EventSource, EventReader, EventCategoryReader, EventSt
 
     override val storeReader: EventReader
         get() = this
-    override val categoryReader: EventCategoryReader
-        get() = this
     override val streamReader: EventStreamReader
         get() = this
     override val streamWriter: EventStreamWriter
@@ -28,9 +26,6 @@ object EmptyEventSource : EventSource, EventReader, EventCategoryReader, EventSt
     override fun readAllForwards(after: Position): Flow<ResolvedEvent> = emptyFlow()
     override val emptyStorePosition: Position
         get() = EmptyPosition
-
-    override fun readCategoryForwards(category: String, after: Position): Flow<ResolvedEvent> = emptyFlow()
-    override fun emptyCategoryPosition(category: String): Position = EmptyPosition
 
     override fun readStreamForwards(streamId: StreamId, after: Long): Flow<ResolvedEvent> = emptyFlow()
 }

@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.stream.consumeAsFlow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import org.araqnid.eventstore.EventCategoryReader
 import org.araqnid.eventstore.EventReader
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.EventSource
@@ -37,7 +36,6 @@ import kotlin.streams.toList
 
 class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSource {
     override val storeReader: EventReader = StoreReader()
-    override val categoryReader: EventCategoryReader = CategoryReader()
     override val streamReader: EventStreamReader = StreamReader()
     override val streamWriter: EventStreamWriter = StreamWriter()
 
@@ -73,8 +71,10 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
         override val positionCodec = TieredFilesystemEventSource.positionCodec
     }
 
-    internal inner class CategoryReader : EventCategoryReader {
-        override fun readCategoryForwards(category: String, after: Position): Flow<ResolvedEvent> {
+    fun readCategory(category: String): EventReader = CategoryReader(category)
+
+    private inner class CategoryReader(private val category: String) : EventReader {
+        override fun readAllForwards(after: Position): Flow<ResolvedEvent> {
             val afterFilename = (after as FilesystemPosition).filename.toString()
             val categoryDirectory = baseDirectory.resolve(encodeForFilename(category))
             if (!Files.isDirectory(categoryDirectory)) return emptyFlow()
@@ -86,7 +86,7 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
                 .mapNotNull { readEvent(it) }
         }
 
-        override fun emptyCategoryPosition(category: String): Position = TieredFilesystemEventSource.emptyStorePosition
+        override val emptyStorePosition: Position = TieredFilesystemEventSource.emptyStorePosition
 
         override val positionCodec = TieredFilesystemEventSource.positionCodec
     }

@@ -53,16 +53,4 @@ actual abstract class EventSourceApiComplianceTest {
     @Test fun read_empty_after_end_of_store() = GlobalScope.promise {
         impls.read_empty_after_end_of_store()
     }
-
-    @Test fun read_category_events() = GlobalScope.promise {
-        impls.read_category_events()
-    }
-
-    @Test fun read_category_events_from_position() = GlobalScope.promise {
-        impls.read_category_events_from_position()
-    }
-
-    @Test fun read_empty_after_end_of_category() = GlobalScope.promise {
-        impls.read_empty_after_end_of_category()
-    }
 }

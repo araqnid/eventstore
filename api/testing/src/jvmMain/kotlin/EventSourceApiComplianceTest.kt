@@ -52,16 +52,4 @@ actual abstract class EventSourceApiComplianceTest {
     @Test fun read_empty_after_end_of_store() = runBlocking {
         impls.read_empty_after_end_of_store()
     }
-
-    @Test fun read_category_events() = runBlocking {
-        impls.read_category_events()
-    }
-
-    @Test fun read_category_events_from_position() = runBlocking {
-        impls.read_category_events_from_position()
-    }
-
-    @Test fun read_empty_after_end_of_category() = runBlocking {
-        impls.read_empty_after_end_of_category()
-    }
 }

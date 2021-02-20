@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.stream.consumeAsFlow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import org.araqnid.eventstore.EventCategoryReader
 import org.araqnid.eventstore.EventReader
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.EventSource
@@ -35,7 +34,6 @@ import java.util.stream.Collectors.maxBy
 
 class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock = Clock.System) : EventSource {
     override val storeReader: EventReader = StoreReader()
-    override val categoryReader: EventCategoryReader = CategoryReader()
     override val streamReader: EventStreamReader = StreamReader()
     override val streamWriter: EventStreamWriter = StreamWriter()
 
@@ -71,15 +69,6 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock = Cloc
         }
 
         override val emptyStorePosition: Position = Empty
-        override val positionCodec: PositionCodec = FlatFilesystemEventSource.positionCodec
-    }
-
-    internal inner class CategoryReader : EventCategoryReader {
-        override fun readCategoryForwards(category: String, after: Position): Flow<ResolvedEvent> {
-            return storeReader.readAllForwards(after).filter { it.event.streamId.category == category }
-        }
-
-        override fun emptyCategoryPosition(category: String): Position = Empty
         override val positionCodec: PositionCodec = FlatFilesystemEventSource.positionCodec
     }
 

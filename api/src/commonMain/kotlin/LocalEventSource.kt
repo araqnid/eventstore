@@ -2,11 +2,10 @@ package org.araqnid.eventstore
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.datetime.Clock
 import kotlin.jvm.Synchronized
 
-class LocalEventSource(private val clock: Clock = Clock.System) : EventSource, EventReader, EventCategoryReader, EventStreamReader, EventStreamWriter {
+class LocalEventSource(private val clock: Clock = Clock.System) : EventSource, EventReader, EventStreamReader, EventStreamWriter {
     companion object {
         val codec = positionCodecOfComparable(
             { (index) -> index.toString() },
@@ -17,8 +16,6 @@ class LocalEventSource(private val clock: Clock = Clock.System) : EventSource, E
 
     override val storeReader: EventReader
         get() = this
-    override val categoryReader: EventCategoryReader
-        get() = this
     override val streamReader: EventStreamReader
         get() = this
     override val streamWriter: EventStreamWriter
@@ -28,14 +25,8 @@ class LocalEventSource(private val clock: Clock = Clock.System) : EventSource, E
 
     override val emptyStorePosition: Position = LocalPosition(-1)
 
-    override fun emptyCategoryPosition(category: String): Position = emptyStorePosition
-
     override fun readAllForwards(after: Position): Flow<ResolvedEvent> {
         return content.subList((after as LocalPosition).index + 1, content.size).asFlow()
-    }
-
-    override fun readCategoryForwards(category: String, after: Position): Flow<ResolvedEvent> {
-        return readAllForwards(after).filter { it.event.streamId.category == category }
     }
 
     override fun readStreamForwards(streamId: StreamId, after: Long): Flow<ResolvedEvent> {

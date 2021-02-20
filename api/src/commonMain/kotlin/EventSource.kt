@@ -5,7 +5,6 @@ import kotlinx.datetime.Instant
 
 interface EventSource {
     val storeReader: EventReader
-    val categoryReader: EventCategoryReader
     val streamReader: EventStreamReader
     val streamWriter: EventStreamWriter
 }
@@ -13,12 +12,6 @@ interface EventSource {
 interface EventReader {
     fun readAllForwards(after: Position = emptyStorePosition): Flow<ResolvedEvent>
     val emptyStorePosition: Position
-    val positionCodec: PositionCodec
-}
-
-interface EventCategoryReader {
-    fun readCategoryForwards(category: String, after: Position = emptyCategoryPosition(category)): Flow<ResolvedEvent>
-    fun emptyCategoryPosition(category: String): Position
     val positionCodec: PositionCodec
 }
 

@@ -36,7 +36,6 @@ class FlatFilesystemEventSourceTest : EventSourceApiComplianceTest() {
                 "test", GuavaBlob.fromString("{ }"), GuavaBlob.fromString("{ /*meta*/ }"))
 
         assertThat(eventSource.storeReader.readAllForwards().readEvents(), equalTo(listOf(eventRecord)))
-        assertThat(eventSource.categoryReader.readCategoryForwards("category").readEvents(), equalTo(listOf(eventRecord)))
         assertThat(eventSource.streamReader.readStreamForwards(eventRecord.streamId).readEvents(), equalTo(listOf(eventRecord)))
     }
 }

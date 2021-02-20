@@ -4,12 +4,10 @@ import com.google.common.io.MoreFiles
 import kotlinx.coroutines.flow.filter
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry
 import org.apache.commons.compress.archivers.cpio.CpioArchiveOutputStream
-import org.araqnid.eventstore.EventCategoryReader
 import org.araqnid.eventstore.EventReader
 import org.araqnid.eventstore.EventSource
 import org.araqnid.eventstore.EventStreamReader
 import org.araqnid.eventstore.EventStreamWriter
-import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.PositionCodec
 import org.araqnid.eventstore.StreamId
 import org.slf4j.LoggerFactory
@@ -35,15 +33,6 @@ class FlatPackFilesystemEventSource(val clock: Clock, val baseDirectory: Path) :
     }
 
     override val storeReader: EventReader = FlatPackFilesystemEventReader(baseDirectory, lockable)
-
-    override val categoryReader: EventCategoryReader = object : EventCategoryReader {
-            override fun readCategoryForwards(category: String, after: Position) =
-                    storeReader.readAllForwards(after)
-                            .filter { re -> re.event.streamId.category == category }
-
-            override fun emptyCategoryPosition(category: String) = storeReader.emptyStorePosition
-            override val positionCodec: PositionCodec = storeReader.positionCodec
-        }
 
     override val streamReader: EventStreamReader = object : EventStreamReader {
             override fun readStreamForwards(streamId: StreamId, after: Long) =
