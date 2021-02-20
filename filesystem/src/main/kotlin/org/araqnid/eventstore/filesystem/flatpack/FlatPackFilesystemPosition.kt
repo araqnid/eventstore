@@ -3,20 +3,20 @@ package org.araqnid.eventstore.filesystem.flatpack
 import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.positionCodecOfComparable
 
-interface FlatPackFilesystemPosition : Comparable<FlatPackFilesystemPosition>, Position {
-    val looseFilename: String
+sealed class FlatPackFilesystemPosition : Comparable<FlatPackFilesystemPosition>, Position {
+    abstract val looseFilename: String
 
     override fun compareTo(other: FlatPackFilesystemPosition) = looseFilename.compareTo(other.looseFilename)
 }
 
-data class PackedFile(val packFileName: String, val entryFileName: String) : FlatPackFilesystemPosition {
+data class PackedFile(val packFileName: String, val entryFileName: String) : FlatPackFilesystemPosition() {
     override val looseFilename: String
         get() = entryFileName
 
     override fun toString() = "$packFileName#$entryFileName"
 }
 
-data class LooseFile(val filename: String) : FlatPackFilesystemPosition {
+data class LooseFile(val filename: String) : FlatPackFilesystemPosition() {
     override val looseFilename: String
         get() = filename
 
@@ -27,7 +27,7 @@ val codec = positionCodecOfComparable(
         { position ->
             when (position) {
                 is PackedFile -> "${position.packFileName}#${position.looseFilename}"
-                else -> position.toString()
+                is LooseFile -> position.looseFilename
             }
         },
         { stored ->
