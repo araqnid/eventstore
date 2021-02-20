@@ -34,23 +34,24 @@ expect abstract class EventSourceApiComplianceTest() {
 class ComplianceTestImplementations(private val eventSource: EventSource) {
     suspend fun read_events_written_to_stream() {
         val streamId = StreamId("alpha", "1")
-        val eventA = NewEvent("type-A",
+        val eventA = NewEvent(
+            "type-A",
             jsonBlob("A-data"),
             jsonBlob("A-metadata")
         )
-        val eventB = NewEvent("type-B",
+        val eventB = NewEvent(
+            "type-B",
             jsonBlob("B-data"),
             jsonBlob("B-metadata")
         )
 
         eventSource.streamWriter.write(streamId, listOf(eventA, eventB))
 
-        assertThat(eventSource.streamReader.readStreamForwards(streamId).readEvents(),
+        assertThat(
+            eventSource.streamReader.readStreamForwards(streamId).readEvents(),
             containsInOrder(
-                eventRecord(
-                    streamId,
-                    0L,
-                    eventA), eventRecord(streamId, 1L, eventB)
+                eventRecord(streamId, 0L, eventA),
+                eventRecord(streamId, 1L, eventB)
             )
         )
     }
@@ -59,11 +60,13 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         val stream0 = StreamId("alpha", "1")
         val stream1 = StreamId("beta", "2")
 
-        val eventA = NewEvent("type-A",
+        val eventA = NewEvent(
+            "type-A",
             jsonBlob("A-data"),
             jsonBlob("A-metadata")
         )
-        val eventB = NewEvent("type-B",
+        val eventB = NewEvent(
+            "type-B",
             jsonBlob("B-data"),
             jsonBlob("B-metadata")
         )
@@ -71,21 +74,17 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         eventSource.streamWriter.write(stream0, listOf(eventA))
         eventSource.streamWriter.write(stream1, listOf(eventB))
 
-        assertThat(eventSource.streamReader.readStreamForwards(stream0).readEvents(),
+        assertThat(
+            eventSource.streamReader.readStreamForwards(stream0).readEvents(),
             containsInOrder(
-                eventRecord(
-                    stream0,
-                    0L,
-                    eventA)
+                eventRecord(stream0, 0L, eventA)
             )
         )
 
-        assertThat(eventSource.streamReader.readStreamForwards(stream1).readEvents(),
+        assertThat(
+            eventSource.streamReader.readStreamForwards(stream1).readEvents(),
             containsInOrder(
-                eventRecord(
-                    stream1,
-                    0L,
-                    eventB)
+                eventRecord(stream1, 0L, eventB)
             )
         )
 
@@ -97,19 +96,25 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
 
     suspend fun write_events_specifying_expected_version_number() {
         val streamId = StreamId("alpha", "1")
-        eventSource.streamWriter.write(streamId, listOf(
-            NewEvent("type-A",
-                jsonBlob("A-data"),
-                jsonBlob("A-metadata")
+        eventSource.streamWriter.write(
+            streamId, listOf(
+                NewEvent(
+                    "type-A",
+                    jsonBlob("A-data"),
+                    jsonBlob("A-metadata")
+                )
             )
-        ))
+        )
 
-        eventSource.streamWriter.write(streamId, 0, listOf(
-            NewEvent("type-B",
-                jsonBlob("B-data"),
-                jsonBlob("B-metadata")
+        eventSource.streamWriter.write(
+            streamId, 0, listOf(
+                NewEvent(
+                    "type-B",
+                    jsonBlob("B-data"),
+                    jsonBlob("B-metadata")
+                )
             )
-        ))
+        )
     }
 
     suspend fun write_events_specifying_expected_empty_version_number() {
@@ -121,76 +126,92 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
                     jsonBlob("A-data"),
                     jsonBlob("A-metadata")
                 )
-            ))
+            )
+        )
     }
 
     suspend fun fails_if_expected_event_number_not_satisfied_yet() {
         val ex = assertThrows {
             eventSource.streamWriter.write(
                 StreamId("alpha", "1"), 0, listOf(
-                    NewEvent("type-A",
+                    NewEvent(
+                        "type-A",
                         jsonBlob("A-data"),
                         jsonBlob("A-metadata")
                     )
-                ))
+                )
+            )
         }
         assertThat(ex, has(Throwable::isWrongExpectedVersionException, equalTo(true)))
     }
 
     suspend fun fails_if_expected_event_number_already_passed() {
         val streamId = StreamId("alpha", "1")
-        eventSource.streamWriter.write(streamId, listOf(
-            NewEvent("type-A",
-                jsonBlob("A-data"),
-                jsonBlob("A-metadata")
-            ),
-            NewEvent("type-B",
-                jsonBlob("B-data"),
-                jsonBlob("B-metadata")
+        eventSource.streamWriter.write(
+            streamId, listOf(
+                NewEvent(
+                    "type-A",
+                    jsonBlob("A-data"),
+                    jsonBlob("A-metadata")
+                ),
+                NewEvent(
+                    "type-B",
+                    jsonBlob("B-data"),
+                    jsonBlob("B-metadata")
+                )
             )
-        ))
+        )
 
         val ex = assertThrows {
-            eventSource.streamWriter.write(streamId, 0, listOf(
-                NewEvent("type-C",
-                    jsonBlob("C-data"),
-                    jsonBlob("C-metadata")
+            eventSource.streamWriter.write(
+                streamId, 0, listOf(
+                    NewEvent(
+                        "type-C",
+                        jsonBlob("C-data"),
+                        jsonBlob("C-metadata")
+                    )
                 )
-            ))
+            )
         }
         assertThat(ex, has(Throwable::isWrongExpectedVersionException, equalTo(true)))
     }
 
     suspend fun read_stream_after_specific_event_number() {
         val streamId = StreamId("alpha", "1")
-        val eventA = NewEvent("type-A",
+        val eventA = NewEvent(
+            "type-A",
             jsonBlob("A-data"),
             jsonBlob("A-metadata")
         )
-        val eventB = NewEvent("type-B",
+        val eventB = NewEvent(
+            "type-B",
             jsonBlob("B-data"),
             jsonBlob("B-metadata")
         )
 
         eventSource.streamWriter.write(streamId, listOf(eventA, eventB))
 
-        assertThat(eventSource.streamReader.readStreamForwards(streamId, 0).readEvents(),
+        assertThat(
+            eventSource.streamReader.readStreamForwards(streamId, 0).readEvents(),
             containsOnly(
                 eventRecord(
                     streamId,
                     1L,
-                    eventB)
+                    eventB
+                )
             )
         )
     }
 
     suspend fun read_empty_after_end_of_stream() {
         val streamId = StreamId("alpha", "1")
-        val eventA = NewEvent("type-A",
+        val eventA = NewEvent(
+            "type-A",
             jsonBlob("A-data"),
             jsonBlob("A-metadata")
         )
-        val eventB = NewEvent("type-B",
+        val eventB = NewEvent(
+            "type-B",
             jsonBlob("B-data"),
             jsonBlob("B-metadata")
         )
@@ -200,15 +221,18 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
     }
 
     suspend fun read_all_events() {
-        val eventA = NewEvent("type-A",
+        val eventA = NewEvent(
+            "type-A",
             jsonBlob("A-data"),
             jsonBlob("A-metadata")
         )
-        val eventB = NewEvent("type-B",
+        val eventB = NewEvent(
+            "type-B",
             jsonBlob("B-data"),
             jsonBlob("B-metadata")
         )
-        val eventC = NewEvent("type-C",
+        val eventC = NewEvent(
+            "type-C",
             jsonBlob("C-data"),
             jsonBlob("C-metadata")
         )
@@ -219,12 +243,10 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         eventSource.streamWriter.write(stream1, listOf(eventB))
         eventSource.streamWriter.write(stream2, listOf(eventC))
 
-        assertThat(eventSource.storeReader.readAllForwards().readEvents(),
+        assertThat(
+            eventSource.storeReader.readAllForwards().readEvents(),
             containsInOrder(
-                eventRecord(
-                    stream0,
-                    0L,
-                    eventA),
+                eventRecord(stream0, 0L, eventA),
                 eventRecord(stream1, 0L, eventB),
                 eventRecord(stream2, 0L, eventC)
             )
@@ -235,15 +257,18 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         val stream0 = StreamId("alpha", "1")
         val stream1 = StreamId("beta", "2")
         val stream2 = StreamId("gamma", "3")
-        val eventA = NewEvent("type-A",
+        val eventA = NewEvent(
+            "type-A",
             jsonBlob("A-data"),
             jsonBlob("A-metadata")
         )
-        val eventB = NewEvent("type-B",
+        val eventB = NewEvent(
+            "type-B",
             jsonBlob("B-data"),
             jsonBlob("B-metadata")
         )
-        val eventC = NewEvent("type-C",
+        val eventC = NewEvent(
+            "type-C",
             jsonBlob("C-data"),
             jsonBlob("C-metadata")
         )
@@ -253,12 +278,10 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
 
         val position = eventSource.storeReader.readAllForwards().toList()[1].position
 
-        assertThat(eventSource.storeReader.readAllForwards(position).readEvents(),
+        assertThat(
+            eventSource.storeReader.readAllForwards(position).readEvents(),
             containsOnly(
-                eventRecord(
-                    stream2,
-                    0L,
-                    eventC)
+                eventRecord(stream2, 0L, eventC)
             )
         )
     }
@@ -267,15 +290,18 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         val stream0 = StreamId("alpha", "1")
         val stream1 = StreamId("beta", "2")
         val stream2 = StreamId("gamma", "3")
-        val eventA = NewEvent("type-A",
+        val eventA = NewEvent(
+            "type-A",
             jsonBlob("A-data"),
             jsonBlob("A-metadata")
         )
-        val eventB = NewEvent("type-B",
+        val eventB = NewEvent(
+            "type-B",
             jsonBlob("B-data"),
             jsonBlob("B-metadata")
         )
-        val eventC = NewEvent("type-C",
+        val eventC = NewEvent(
+            "type-C",
             jsonBlob("C-data"),
             jsonBlob("C-metadata")
         )
@@ -296,9 +322,16 @@ private fun eventRecord(streamId: StreamId, eventNumber: Long, asCreated: NewEve
     eventNumber,
     asCreated.type,
     asCreated.data,
-    asCreated.metadata)
+    asCreated.metadata
+)
 
-private fun eventRecord(streamId: StreamId, eventNumber: Long, type: String, data: Blob, metadata: Blob): Matcher<EventRecord> {
+private fun eventRecord(
+    streamId: StreamId,
+    eventNumber: Long,
+    type: String,
+    data: Blob,
+    metadata: Blob
+): Matcher<EventRecord> {
     return has(EventRecord::streamId, equalTo(streamId)) and
             has(EventRecord::eventNumber, equalTo(eventNumber)) and
             has(EventRecord::type, equalTo(type)) and
