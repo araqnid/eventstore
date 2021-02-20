@@ -106,12 +106,11 @@ class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Cl
         private fun positionIfStreamMatches(path: Path): StreamPosition? {
             return when {
                 path.isLooseFile() -> {
-                    val matcher = filenamePattern.matcher(path.fileName.toString())
-                    if (!matcher.matches()) throw RuntimeException("Unparseable filename: $path")
-                    val category = matcher.group(2)
-                    val id = matcher.group(3)
+                    val matcher = filenamePattern.matchEntire(path.fileName.toString()) ?: error("Unparseable filename: $path")
+                    val category = matcher.groupValues[2]
+                    val id = matcher.groupValues[3]
                     if (streamId.category == category && streamId.id == id) {
-                        val eventNumber = matcher.group(4).toLong()
+                        val eventNumber = matcher.groupValues[4].toLong()
                         StreamPosition(path.fileName.toString(), eventNumber)
                     } else {
                         null
@@ -123,11 +122,10 @@ class FlatPackFilesystemEventStreamWriter(val baseDirectory: Path, val clock: Cl
                         val streams = HashMap<StreamId, Long>()
                         runBlocking {
                             readPackFileEntries(path) { entry, _ -> entry.name }.collect { filename ->
-                                val matcher = filenamePattern.matcher(filename.toString())
-                                if (!matcher.matches()) throw RuntimeException("Unparseable filename in pack $path: $filename")
-                                val category = matcher.group(2)
-                                val id = matcher.group(3)
-                                val eventNumber = matcher.group(4).toLong()
+                                val matcher = filenamePattern.matchEntire(filename.toString()) ?: error("Unparseable filename in pack $path: $filename")
+                                val category = matcher.groupValues[2]
+                                val id = matcher.groupValues[3]
+                                val eventNumber = matcher.groupValues[4].toLong()
                                 streams[StreamId(category, id)] = eventNumber
                             }
                         }

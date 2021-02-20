@@ -31,7 +31,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.ResolverStyle
 import java.time.temporal.ChronoField
-import java.util.regex.Pattern
 import kotlin.streams.toList
 
 class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSource {
@@ -115,7 +114,7 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
             val dir = streamDirectory(streamId)
             if (!Files.isDirectory(dir)) return emptyStreamEventNumber
             return Files.list(dir).use { stream ->
-                stream.filter { p -> filenamePattern.matcher(p.fileName.toString()).matches() }
+                stream.filter { p -> filenamePattern.matches(p.fileName.toString()) }
                         .count() - 1
             }
         }
@@ -130,11 +129,10 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
     }
 
     private fun readEvent(streamId: StreamId, dataPath: Path): ResolvedEvent? {
-        val matcher = filenamePattern.matcher(dataPath.fileName.toString())
-        if (!matcher.matches()) return null
-        val timestamp: Instant = Instant.parse(matcher.group(1))
-        val eventNumber: Long = matcher.group(2).toLong(16)
-        val eventType: String = matcher.group(3)
+        val matchResult = filenamePattern.matchEntire(dataPath.fileName.toString()) ?: return null
+        val timestamp: Instant = Instant.parse(matchResult.groupValues[1])
+        val eventNumber: Long = matchResult.groupValues[2].toLong(16)
+        val eventType: String = matchResult.groupValues[3]
         val dataSource: ByteSource = MoreFiles.asByteSource(dataPath)
         val metadataPath = dataPath.resolveSibling(toMetadataFilename(dataPath.fileName.toString()))!!
         val metadataSource: ByteSource =
@@ -164,7 +162,7 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
                 { str -> FilesystemPosition(Paths.get(str)) })
         private val emptyStorePosition = FilesystemPosition(Paths.get(""))
 
-        private val filenamePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z)\\.([0-9a-f]+)\\.(.+)\\.data\\.json")!!
+        private val filenamePattern = Regex("""(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)\.([0-9a-f]+)\.(.+)\.data\.json""")
         private val dateFormatter = DateTimeFormatterBuilder()
                 .append(DateTimeFormatter.ISO_LOCAL_DATE)
                 .appendLiteral('T')

@@ -28,8 +28,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.ResolverStyle
 import java.time.temporal.ChronoField
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 import java.util.stream.Collectors.maxBy
 
 class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock = Clock.System) : EventSource {
@@ -51,12 +49,11 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock = Cloc
         }
 
         private fun readEvent(dataPath: Path): ResolvedEvent? {
-            val matcher: Matcher = filenamePattern.matcher(dataPath.fileName.toString())
-            if (!matcher.matches()) return null
-            val timestamp = Instant.parse(matcher.group(1))
-            val streamId = StreamId(matcher.group(2), matcher.group(3))
-            val eventNumber = matcher.group(4).toLong(16)
-            val eventType = matcher.group(5)
+            val matcher = filenamePattern.matchEntire(dataPath.fileName.toString()) ?: return null
+            val timestamp = Instant.parse(matcher.groupValues[1])
+            val streamId = StreamId(matcher.groupValues[2], matcher.groupValues[3])
+            val eventNumber = matcher.groupValues[4].toLong(16)
+            val eventType = matcher.groupValues[5]
             val metadataPath = dataPath.resolveSibling(metadataFilenameFor(dataPath.fileName.toString()))
 
             val dataBlob = GuavaBlob.fromSource(MoreFiles.asByteSource(dataPath))
@@ -102,10 +99,9 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock = Cloc
         }
 
         private fun eventNumber(filename: String, matchStreamId: StreamId): Long? {
-            with(filenamePattern.matcher(filename)) {
-                if (!matches()) return null
-                if (StreamId(group(2), group(3)) != matchStreamId) return null
-                return group(4).toLong(16)
+            with(filenamePattern.matchEntire(filename) ?: return null) {
+                if (StreamId(groupValues[2], groupValues[3]) != matchStreamId) return null
+                return groupValues[4].toLong(16)
             }
         }
     }
@@ -137,7 +133,7 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock = Cloc
                     else
                         PackedFile(str.substring(0, index - 1), str.substring(index + 1))
                 })
-        private val filenamePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z)\\.([^.]+)\\.([^.]+)\\.([0-9a-f]+)\\.([^.]+)\\.data\\.json")!!
+        private val filenamePattern = Regex("""(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)\.([^.]+)\.([^.]+)\.([0-9a-f]+)\.([^.]+)\.data\.json""")
         private val dateFormatter = DateTimeFormatterBuilder()
                 .append(DateTimeFormatter.ISO_LOCAL_DATE)
                 .appendLiteral('T')

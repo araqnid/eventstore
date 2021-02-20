@@ -62,15 +62,12 @@ class FlatPackFilesystemEventSource(val clock: Clock, val baseDirectory: Path) :
                         cpio.putArchiveEntry(entry)
                         cpio.write(Files.readAllBytes(looseFile))
                         cpio.closeArchiveEntry()
-                        val matcher = filenamePattern.matcher(looseFile.fileName.toString())
-                        if (!matcher.matches()) {
-                            throw IllegalStateException("Unparseable filename: $looseFile")
-                        }
-                        latestTimestamp = Instant.parse(matcher.group(1))
+                        val matcher = filenamePattern.matchEntire(looseFile.fileName.toString()) ?: error("Unparseable filename: $looseFile")
+                        latestTimestamp = Instant.parse(matcher.groupValues[1])
 
-                        val category = matcher.group(2)
-                        val streamId = matcher.group(3)
-                        val eventNumber = matcher.group(4).toLong()
+                        val category = matcher.groupValues[2]
+                        val streamId = matcher.groupValues[3]
+                        val eventNumber = matcher.groupValues[4].toLong()
                         streamPositions[StreamId(category, streamId)] = eventNumber
 
                         packedLooseFiles.add(looseFile)

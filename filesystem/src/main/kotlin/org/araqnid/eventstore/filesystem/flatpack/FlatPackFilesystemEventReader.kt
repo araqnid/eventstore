@@ -92,15 +92,12 @@ class FlatPackFilesystemEventReader(val baseDirectory: Path, private val lockabl
     }
 
     private fun makeEvent(filename: String, data: ByteArray): EventRecord {
-        val matcher = filenamePattern.matcher(filename)
-        if (!matcher.matches()) {
-            throw RuntimeException("Unparseable filename: $filename")
-        }
-        val timestamp = Instant.parse(matcher.group(1))
-        val category = matcher.group(2)
-        val streamId = matcher.group(3)
-        val eventNumber = matcher.group(4).toLong()
-        val eventType = matcher.group(5).intern()
+        val matchResult = filenamePattern.matchEntire(filename) ?: error("Unparseable filename: $filename")
+        val timestamp = Instant.parse(matchResult.groupValues[1])
+        val category = matchResult.groupValues[2]
+        val streamId = matchResult.groupValues[3]
+        val eventNumber = matchResult.groupValues[4].toLong()
+        val eventType = matchResult.groupValues[5].intern()
         val dataOutput = ByteArrayOutputStream()
         val metadataOutput = ByteArrayOutputStream()
         jsonFactory.createParser(data).use { parser ->

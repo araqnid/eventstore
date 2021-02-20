@@ -13,7 +13,7 @@ import kotlin.streams.toList
 
 abstract class FilesystemSnapshotPersister(val baseDirectory: Path, private val fileExtension: String, val clock: Clock) : SnapshotPersister {
     private val logger = LoggerFactory.getLogger(FilesystemSnapshotPersister::class.java)
-    private val filePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z)\\.snapshot" + Pattern.quote(fileExtension))
+    private val filePattern = Regex("""(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)\.snapshot""" + Pattern.quote(fileExtension))
     private val random = SecureRandom()
 
     override fun load(): Position? {
@@ -84,9 +84,8 @@ abstract class FilesystemSnapshotPersister(val baseDirectory: Path, private val 
     private fun snapshotFiles(): List<FileInfo> = Files.list(baseDirectory).use { it.toList() }.mapNotNull(this::snapshotFileInfo)
 
     private fun snapshotFileInfo(path: Path): FileInfo? {
-        val matcher = filePattern.matcher(path.fileName.toString())
-        if (!matcher.matches()) return null
-        val timestamp = Instant.parse(matcher.group(1))
+        val matcher = filePattern.matchEntire(path.fileName.toString()) ?: return null
+        val timestamp = Instant.parse(matcher.groupValues[1])
         return FileInfo(path, timestamp)
     }
 
