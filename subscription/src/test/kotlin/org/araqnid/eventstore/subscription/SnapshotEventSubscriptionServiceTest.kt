@@ -5,9 +5,8 @@ import com.google.common.util.concurrent.MoreExecutors.directExecutor
 import com.google.common.util.concurrent.Service
 import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.runBlocking
-import org.araqnid.eventstore.Blob
-import org.araqnid.eventstore.EventRecord
-import org.araqnid.eventstore.InMemoryEventSource
+import org.araqnid.eventstore.GuavaBlob
+import org.araqnid.eventstore.LocalEventSource
 import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.ResolvedEvent
@@ -29,15 +28,14 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
-import java.time.Clock
 import java.time.Duration
-import java.time.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Phaser
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.text.Charsets.UTF_8
+import java.time.Clock as JavaClock
 
 @Suppress("UnstableApiUsage")
 class SnapshotEventSubscriptionServiceTest {
@@ -50,8 +48,8 @@ class SnapshotEventSubscriptionServiceTest {
         val serviceListener = mock<Service.Listener>()
         val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
-        val clock = Clock.systemUTC()
-        val eventSource = InMemoryEventSource(clock)
+        val clock = JavaClock.systemUTC()
+        val eventSource = LocalEventSource(clock.asKotlin())
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(awaitListener.serviceListenerProxy, directExecutor())
@@ -86,8 +84,8 @@ class SnapshotEventSubscriptionServiceTest {
         val serviceListener = mock<Service.Listener>()
         val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
-        val clock = Clock.systemUTC()
-        val eventSource = InMemoryEventSource(clock)
+        val clock = JavaClock.systemUTC()
+        val eventSource = LocalEventSource(clock.asKotlin())
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(awaitListener.serviceListenerProxy, directExecutor())
@@ -124,8 +122,8 @@ class SnapshotEventSubscriptionServiceTest {
         val serviceListener = mock<Service.Listener>()
         val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
-        val clock = Clock.systemUTC()
-        val eventSource = InMemoryEventSource(clock)
+        val clock = JavaClock.systemUTC()
+        val eventSource = LocalEventSource(clock.asKotlin())
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(awaitListener.subscriptionListenerProxy, directExecutor())
@@ -158,8 +156,8 @@ class SnapshotEventSubscriptionServiceTest {
         val serviceListener = mock<Service.Listener>()
         val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
-        val clock = Clock.systemUTC()
-        val eventSource = InMemoryEventSource(clock)
+        val clock = JavaClock.systemUTC()
+        val eventSource = LocalEventSource(clock.asKotlin())
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(awaitListener.serviceListenerProxy, directExecutor())
@@ -198,8 +196,8 @@ class SnapshotEventSubscriptionServiceTest {
         val serviceListener = mock<Service.Listener>()
         val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
-        val clock = Clock.systemUTC()
-        val eventSource = InMemoryEventSource(clock)
+        val clock = JavaClock.systemUTC()
+        val eventSource = LocalEventSource(clock.asKotlin())
 
         val snapshotWrites = Semaphore(0)
         val lastPollPosition = AtomicReference(eventSource.storeReader.emptyStorePosition)
@@ -256,8 +254,8 @@ class SnapshotEventSubscriptionServiceTest {
     }
 
     @Test fun waits_for_snapshot_writer_to_finish_when_shutting_down() {
-        val clock = Clock.systemUTC()
-        val eventSource = InMemoryEventSource(clock)
+        val clock = JavaClock.systemUTC()
+        val eventSource = LocalEventSource(clock.asKotlin())
 
         val lastPolledPosition = AtomicReference(eventSource.storeReader.emptyStorePosition)
 
@@ -323,8 +321,8 @@ class SnapshotEventSubscriptionServiceTest {
         val snapshotPersister = mock<SnapshotPersister>()
         val serviceListener = mock<Service.Listener>()
 
-        val clock = Clock.systemUTC()
-        val eventSource = InMemoryEventSource(clock)
+        val clock = JavaClock.systemUTC()
+        val eventSource = LocalEventSource(clock.asKotlin())
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(subscriptionListener, directExecutor())
@@ -354,8 +352,8 @@ class SnapshotEventSubscriptionServiceTest {
         val serviceListener = mock<Service.Listener>()
         val awaitListener = AwaitListener(serviceListener, subscriptionListener)
 
-        val clock = Clock.systemUTC()
-        val eventSource = InMemoryEventSource(clock)
+        val clock = JavaClock.systemUTC()
+        val eventSource = LocalEventSource(clock.asKotlin())
         val subscription = PollingEventSubscriptionService(eventSource, sink, Duration.ofSeconds(1))
         val snapshotEventSubscriptionService = SnapshotEventSubscriptionService(subscription, snapshotPersister, clock, Duration.ofSeconds(1))
         snapshotEventSubscriptionService.addListener(awaitListener.serviceListenerProxy, directExecutor())
@@ -395,8 +393,8 @@ class SnapshotEventSubscriptionServiceTest {
         val snapshotPersister = mock<SnapshotPersister>()
         val serviceListener = mock<Service.Listener>()
 
-        val clock = Clock.systemUTC()
-        val eventSource = InMemoryEventSource(clock)
+        val clock = JavaClock.systemUTC()
+        val eventSource = LocalEventSource(clock.asKotlin())
 
         val eventConsumptions = Semaphore(0)
         val sink = object : PollingEventSubscriptionService.Sink {
@@ -431,11 +429,11 @@ class SnapshotEventSubscriptionServiceTest {
         assertThat(subscription.state(), equalTo(Service.State.FAILED))
     }
 
-    private fun writeEvent(eventSource: InMemoryEventSource): ResolvedEvent {
+    private fun writeEvent(eventSource: LocalEventSource): ResolvedEvent {
         return runBlocking {
             val eventsWritten = eventSource.storeReader.readAllForwards(eventSource.storeReader.emptyStorePosition).count()
             eventSource.write(StreamId("test", "test"),
-                listOf(NewEvent("Test", Blob.fromString(eventsWritten.toString(), UTF_8))))
+                listOf(NewEvent("Test", GuavaBlob.fromString(eventsWritten.toString(), UTF_8))))
             eventSource.storeReader.readAllForwards(eventSource.storeReader.emptyStorePosition)
                 .maxWith(compareBy(Comparator(eventSource.positionCodec::comparePositions)) { it.position })!!
         }
@@ -481,11 +479,6 @@ class SnapshotEventSubscriptionServiceTest {
     private fun anyThrowable(): Throwable {
         Mockito.any(Throwable::class.java)
         return UnsupportedOperationException()
-    }
-
-    private fun anyResolvedEvent(): ResolvedEvent {
-        Mockito.any(ResolvedEvent::class.java)
-        return ResolvedEvent(TestPosition(0), EventRecord(StreamId("",""), 0L, Instant.EPOCH, "", Blob.empty, Blob.empty))
     }
 
     private class AwaitListener(private val serviceListener: Service.Listener, private val subscriptionListener: SnapshotEventSubscriptionService.SubscriptionListener) {

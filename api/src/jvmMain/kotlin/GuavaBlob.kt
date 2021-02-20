@@ -8,16 +8,16 @@ import java.io.OutputStream
 import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
 
-class Blob(private val content: ByteArray) : ByteSource() {
+class GuavaBlob(private val content: ByteArray) : ByteSource() {
     companion object {
-        val empty = Blob(ByteArray(0))
-        fun fromString(content: String, charset: Charset = UTF_8) = Blob(content.toByteArray(charset))
+        val empty = GuavaBlob(ByteArray(0))
+        fun fromString(content: String, charset: Charset = UTF_8) = GuavaBlob(content.toByteArray(charset))
 
-        fun fromSource(byteSource: ByteSource): Blob {
+        fun fromSource(byteSource: ByteSource): GuavaBlob {
             return if (byteSource.isEmpty)
                 empty
             else
-                Blob(byteSource.read())
+                GuavaBlob(byteSource.read())
         }
     }
 
@@ -43,7 +43,7 @@ class Blob(private val content: ByteArray) : ByteSource() {
     override fun slice(offset: Long, length: Long): ByteSource = Slice(offset.toInt(), length.toInt())
 
     override fun equals(other: Any?): Boolean {
-        return if (other is Blob) {
+        return if (other is GuavaBlob) {
             content.contentEquals(other.content)
         }
         else {
@@ -72,7 +72,7 @@ class Blob(private val content: ByteArray) : ByteSource() {
             return length.toLong()
         }
 
-        override fun slice(newOffset: Long, length: Long): ByteSource = this@Blob.slice(offset + newOffset, length)
+        override fun slice(newOffset: Long, length: Long): ByteSource = this@GuavaBlob.slice(offset + newOffset, length)
 
         override fun toString(): String {
             return "Blob(${content.size} bytes)[$offset+$length]"

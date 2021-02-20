@@ -12,16 +12,16 @@ import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import org.araqnid.eventstore.Blob
+import kotlinx.datetime.Instant
 import org.araqnid.eventstore.EventReader
 import org.araqnid.eventstore.EventRecord
+import org.araqnid.eventstore.GuavaBlob
 import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
 import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.time.Instant
 import kotlin.streams.toList
 
 class FlatPackFilesystemEventReader(val baseDirectory: Path, private val lockable: Lockable) : EventReader {
@@ -115,6 +115,6 @@ class FlatPackFilesystemEventReader(val baseDirectory: Path, private val lockabl
             }
         }
         return EventRecord(StreamId(category, streamId), eventNumber, timestamp, eventType,
-                Blob(dataOutput.toByteArray()), Blob(metadataOutput.toByteArray()))
+                GuavaBlob(dataOutput.toByteArray()), GuavaBlob(metadataOutput.toByteArray()))
     }
 }

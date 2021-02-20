@@ -3,18 +3,17 @@ package org.araqnid.eventstore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
-import java.time.Clock
-import java.time.Instant
-import java.util.concurrent.CopyOnWriteArrayList
+import kotlinx.datetime.Clock
+import kotlin.jvm.Synchronized
 
-class InMemoryEventSource(val clock: Clock) : EventSource, EventReader, EventCategoryReader, EventStreamReader, EventStreamWriter {
+class LocalEventSource(private val clock: Clock = Clock.System) : EventSource, EventReader, EventCategoryReader, EventStreamReader, EventStreamWriter {
     companion object {
         val codec = positionCodecOfComparable(
-                { (index) -> index.toString() },
-                { str -> InMemoryPosition(Integer.parseInt(str)) })
+            { (index) -> index.toString() },
+            { str -> LocalPosition(str.toInt()) })
     }
 
-    val content = CopyOnWriteArrayList<ResolvedEvent>()
+    private val content = createLocalEventSourceContent()
 
     override val storeReader: EventReader
         get() = this
@@ -27,12 +26,12 @@ class InMemoryEventSource(val clock: Clock) : EventSource, EventReader, EventCat
     override val positionCodec: PositionCodec
         get() = codec
 
-    override val emptyStorePosition: Position = InMemoryPosition(-1)
+    override val emptyStorePosition: Position = LocalPosition(-1)
 
     override fun emptyCategoryPosition(category: String): Position = emptyStorePosition
 
     override fun readAllForwards(after: Position): Flow<ResolvedEvent> {
-        return content.subList((after as InMemoryPosition).index + 1, content.size).asFlow()
+        return content.subList((after as LocalPosition).index + 1, content.size).asFlow()
     }
 
     override fun readCategoryForwards(category: String, after: Position): Flow<ResolvedEvent> {
@@ -47,26 +46,28 @@ class InMemoryEventSource(val clock: Clock) : EventSource, EventReader, EventCat
 
     @Synchronized
     override fun write(streamId: StreamId, events: List<NewEvent>) {
-        val timestamp = Instant.now(clock)
+        val timestamp = clock.now()
         var lastEventNumber = lastEventNumber(streamId)
         events.forEach { ev ->
-            content += ev.toEventRecord(streamId, ++lastEventNumber, timestamp).toResolvedEvent(InMemoryPosition(content.size))
+            content += ev.toEventRecord(streamId, ++lastEventNumber, timestamp).toResolvedEvent(LocalPosition(content.size))
         }
     }
 
     @Synchronized
     override fun write(streamId: StreamId, expectedEventNumber: Long, events: List<NewEvent>) {
-        val timestamp = Instant.now(clock)
+        val timestamp = clock.now()
         var lastEventNumber = lastEventNumber(streamId)
         if (lastEventNumber != expectedEventNumber) throw WrongExpectedVersionException(streamId, lastEventNumber, expectedEventNumber)
         events.forEach { ev ->
-            content += ev.toEventRecord(streamId, ++lastEventNumber, timestamp).toResolvedEvent(InMemoryPosition(content.size))
+            content += ev.toEventRecord(streamId, ++lastEventNumber, timestamp).toResolvedEvent(LocalPosition(content.size))
         }
     }
 
     private fun lastEventNumber(streamId: StreamId): Long = content.filter { it.event.streamId == streamId }.count().toLong() - 1
 
-    private data class InMemoryPosition(val index: Int) : Position, Comparable<InMemoryPosition> {
-        override fun compareTo(other: InMemoryPosition): Int = index.compareTo(other.index)
+    private data class LocalPosition(val index: Int) : Position, Comparable<LocalPosition> {
+        override fun compareTo(other: LocalPosition): Int = index.compareTo(other.index)
     }
 }
+
+internal expect fun createLocalEventSourceContent(): MutableList<ResolvedEvent>

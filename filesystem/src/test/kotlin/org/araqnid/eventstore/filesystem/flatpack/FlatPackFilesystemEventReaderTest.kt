@@ -1,11 +1,11 @@
 package org.araqnid.eventstore.filesystem.flatpack
 
-import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventRecord
+import org.araqnid.eventstore.GuavaBlob
 import org.araqnid.eventstore.ResolvedEvent
 import org.araqnid.eventstore.StreamId
+import org.araqnid.eventstore.filesystem.blockingToList
 import org.araqnid.eventstore.filesystem.bytesEquivalentTo
-import org.araqnid.eventstore.testing.blockingToList
 import org.araqnid.eventstore.testutil.NIOTemporaryFolder
 import org.araqnid.kotlin.assertthat.Matcher
 import org.araqnid.kotlin.assertthat.and
@@ -107,11 +107,11 @@ class FlatPackFilesystemEventReaderTest {
         val record = has(EventRecord::streamId, equalTo(streamId)) and
                 has(EventRecord::eventNumber, equalTo(eventNumber)) and
                 has(EventRecord::type, equalTo(eventType)) and
-                has(EventRecord::data, has(Blob::content, bytesEquivalentTo(expectedJson)))
+                has(EventRecord::data, has(GuavaBlob::content, bytesEquivalentTo(expectedJson)))
 
         return has(ResolvedEvent::event, record)
     }
 }
 
-private val Blob.content: ByteArray
+private val GuavaBlob.content: ByteArray
     get() = read()

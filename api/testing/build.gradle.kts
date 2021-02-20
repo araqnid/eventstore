@@ -1,24 +1,32 @@
 plugins {
-    kotlin("jvm")
+    kotlin("multiplatform")
     `maven-publish`
-    `java-library`
 }
 
-dependencies {
-    api(project(":api"))
-    api(kotlin("test-junit"))
-    api("junit:junit:4.13")
-    implementation("org.araqnid.kotlin.assert-that:assert-that:${LibraryVersions.assertThat}")
+kotlin {
+    jvm { }
+    js(IR) {
+        nodejs { }
+        useCommonJs()
+    }
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
-    withSourcesJar()
+}
+
+dependencies {
+    commonMainApi(project(":api"))
+    commonMainImplementation("org.araqnid.kotlin.assert-that:assert-that:${LibraryVersions.assertThat}")
+    commonMainImplementation(kotlin("test-common"))
+    commonMainImplementation(kotlin("test-annotations-common"))
+    "jvmMainApi"(kotlin("test-junit"))
+    "jvmMainApi"("junit:junit:4.13")
 }
 
 tasks {
-    "jar"(Jar::class) {
+    "jvmJar"(Jar::class) {
         manifest {
             attributes["Implementation-Title"] = project.description ?: project.name
             attributes["Implementation-Version"] = project.version
@@ -26,21 +34,16 @@ tasks {
         }
     }
 
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        kotlinOptions {
-            jvmTarget = "1.8"
-        }
+    withType<org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile>().configureEach {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
+    withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().configureEach {
+        kotlinOptions.freeCompilerArgs += listOf("-Xopt-in=kotlin.RequiresOptIn")
     }
 }
 
 publishing {
-    publications {
-        register<MavenPublication>("mavenJava") {
-            from(components["java"])
-            artifactId = "eventstore${project.path.replace(':', '-')}"
-        }
-    }
-
     repositories {
         maven(url = "https://maven.pkg.github.com/araqnid/eventstore") {
             name = "github"

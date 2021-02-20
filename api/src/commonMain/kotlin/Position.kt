@@ -1,5 +1,8 @@
 package org.araqnid.eventstore
 
+import kotlin.reflect.KClass
+import kotlin.reflect.cast
+
 interface Position
 
 interface PositionCodec {
@@ -8,7 +11,7 @@ interface PositionCodec {
     fun comparePositions(left: Position, right: Position): Int
 }
 
-fun <T> positionCodecOfComparable(clazz: Class<T>, encoder: (T) -> String, decoder: (String) -> T): PositionCodec where T : Position, T: Comparable<T> {
+fun <T> positionCodecOfComparable(clazz: KClass<T>, encoder: (T) -> String, decoder: (String) -> T): PositionCodec where T : Position, T: Comparable<T> {
     return object : PositionCodec {
         override fun encode(position: Position): String = encoder(clazz.cast(position))
         override fun decode(encoded: String): Position = decoder(encoded)
@@ -34,7 +37,7 @@ inline fun <reified T> positionCodecOfComparable(crossinline encoder: (T) -> Str
     }
 }
 
-fun <T : Position> positionCodecFromComparator(clazz: Class<T>, encoder: (T) -> String, decoder: (String) -> T, comparator: Comparator<in T>): PositionCodec {
+fun <T : Position> positionCodecFromComparator(clazz: KClass<T>, encoder: (T) -> String, decoder: (String) -> T, comparator: Comparator<in T>): PositionCodec {
     return object : PositionCodec {
         override fun encode(position: Position): String = encoder(clazz.cast(position))
         override fun decode(encoded: String): Position = decoder(encoded)

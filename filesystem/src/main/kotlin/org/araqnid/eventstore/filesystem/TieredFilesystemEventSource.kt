@@ -7,13 +7,15 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.stream.consumeAsFlow
-import org.araqnid.eventstore.Blob
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import org.araqnid.eventstore.EventCategoryReader
 import org.araqnid.eventstore.EventReader
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.EventSource
 import org.araqnid.eventstore.EventStreamReader
 import org.araqnid.eventstore.EventStreamWriter
+import org.araqnid.eventstore.GuavaBlob
 import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.NoSuchStreamException
 import org.araqnid.eventstore.Position
@@ -25,8 +27,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
-import java.time.Clock
-import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
@@ -96,7 +96,7 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
             val dir = streamDirectory(streamId)
             Files.createDirectories(dir)
             var nextEventNumber = firstEventNumber
-            val timestampString = dateFormatter.format(Instant.now(clock))
+            val timestampString = dateFormatter.format(clock.now())
             events.forEach { (eventType, data, metadata) ->
                 val hexEventNumber = String.format("%08x", nextEventNumber)
                 val dataPath = dir.resolve("$timestampString.$hexEventNumber.$eventType.data.json")!!
@@ -143,7 +143,7 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
                 else
                     ByteSource.empty()
 
-        return EventRecord(streamId, eventNumber, timestamp, eventType, Blob.fromSource(dataSource), Blob.fromSource(metadataSource))
+        return EventRecord(streamId, eventNumber, timestamp, eventType, GuavaBlob.fromSource(dataSource), GuavaBlob.fromSource(metadataSource))
                 .toResolvedEvent(FilesystemPosition(dataPath.fileName))
     }
 

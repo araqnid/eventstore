@@ -14,6 +14,8 @@ subprojects {
 
     repositories {
         mavenCentral()
+        jcenter() // for kotlinx-nodejs
+        maven(url = "https://kotlin.bintray.com/kotlinx/") // for kotlinx-datetime
 
         if (isGithubUserAvailable(project)) {
             for (repo in listOf("assert-that")) {

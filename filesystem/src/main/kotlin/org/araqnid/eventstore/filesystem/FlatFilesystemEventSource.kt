@@ -5,13 +5,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.stream.consumeAsFlow
-import org.araqnid.eventstore.Blob
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import org.araqnid.eventstore.EventCategoryReader
 import org.araqnid.eventstore.EventReader
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.EventSource
 import org.araqnid.eventstore.EventStreamReader
 import org.araqnid.eventstore.EventStreamWriter
+import org.araqnid.eventstore.GuavaBlob
 import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.Position
 import org.araqnid.eventstore.PositionCodec
@@ -22,8 +24,6 @@ import org.araqnid.eventstore.positionCodecOfComparable
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.time.Clock
-import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
@@ -32,9 +32,8 @@ import java.time.temporal.ChronoField
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.stream.Collectors.maxBy
-import java.util.stream.Stream
 
-class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : EventSource {
+class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock = Clock.System) : EventSource {
     override val storeReader: EventReader = StoreReader()
     override val categoryReader: EventCategoryReader = CategoryReader()
     override val streamReader: EventStreamReader = StreamReader()
@@ -62,11 +61,11 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
             val eventType = matcher.group(5)
             val metadataPath = dataPath.resolveSibling(metadataFilenameFor(dataPath.fileName.toString()))
 
-            val dataBlob = Blob.fromSource(MoreFiles.asByteSource(dataPath))
+            val dataBlob = GuavaBlob.fromSource(MoreFiles.asByteSource(dataPath))
             val metadataBlob = if (Files.exists(metadataPath))
-                Blob.fromSource(MoreFiles.asByteSource(metadataPath))
+                GuavaBlob.fromSource(MoreFiles.asByteSource(metadataPath))
             else
-                Blob.empty
+                GuavaBlob.empty
 
             return EventRecord(streamId, eventNumber, timestamp, eventType, dataBlob, metadataBlob).toResolvedEvent(LooseFile(dataPath.fileName.toString()))
         }
@@ -94,7 +93,7 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
     internal inner class StreamWriter : AbstractStreamWriter() {
         override fun saveEvents(firstEventNumber: Long, streamId: StreamId, events: List<NewEvent>) {
             var nextEventNumber = firstEventNumber
-            val timestamp = Instant.now(clock)
+            val timestamp = clock.now()
             events.forEach { event ->
                 val dataFilename = "${dateFormatter.format(timestamp)}.${streamId.category}.${streamId.id}.${String.format("%08x", nextEventNumber)}.${event.type}.data.json"
                 event.data.copyTo(MoreFiles.asByteSink(baseDirectory.resolve(dataFilename), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE))
@@ -165,8 +164,4 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : Eve
                 .withResolverStyle(ResolverStyle.STRICT)
                 .withZone(ZoneOffset.UTC)
     }
-}
-
-private fun <T, R> Stream<T>.collectAndClose(collector: java.util.stream.Collector<in T, *, out R>): R = use {
-    it.collect(collector)
 }
