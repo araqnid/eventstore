@@ -2,7 +2,7 @@ package org.araqnid.eventstore.filesystem
 
 import com.google.common.collect.ImmutableSet
 
-internal val permittedFilenameCharacters: Set<Char> = ImmutableSet.builder<Char>()
+private val permittedFilenameCharacters: Set<Char> = ImmutableSet.builder<Char>()
         .addAll('A'..'Z')
         .addAll('a'..'z')
         .addAll('0'..'9')
