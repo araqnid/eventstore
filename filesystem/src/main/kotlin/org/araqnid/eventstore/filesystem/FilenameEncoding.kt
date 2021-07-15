@@ -20,7 +20,7 @@ internal fun encodeForFilename(str: String): String {
         when {
             permittedFilenameCharacters.contains(c) -> builder.append(c)
             c == '%' -> builder.append("%%")
-            else -> builder.append("%u").append(String.format("%04x", c.toInt()))
+            else -> builder.append("%u").append(String.format("%04x", c.code))
         }
     }
     if (builder.length == str.length) return str
