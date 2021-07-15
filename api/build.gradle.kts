@@ -19,7 +19,7 @@ java {
 dependencies {
     commonMainApi(kotlin("stdlib-common"))
     commonMainApi("org.jetbrains.kotlinx:kotlinx-coroutines-core:${LibraryVersions.coroutines}")
-    commonMainApi("org.jetbrains.kotlinx:kotlinx-datetime:0.1.1")
+    commonMainApi("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
 
     "jvmMainApi"(kotlin("stdlib-jdk8"))
     "jvmMainApi"("com.google.guava:guava:${LibraryVersions.guava}")
