@@ -15,42 +15,44 @@ private val permittedFilenameCharacters: Set<Char> = ImmutableSet.builder<Char>(
         .build()
 
 internal fun encodeForFilename(str: String): String {
-    val builder = StringBuilder(str.length)
-    for (c in str) {
-        when {
-            permittedFilenameCharacters.contains(c) -> builder.append(c)
-            c == '%' -> builder.append("%%")
-            else -> builder.append("%u").append(String.format("%04x", c.code))
+    if (str.all { permittedFilenameCharacters.contains(it) }) return str
+
+    return buildString(str.length) {
+        for (c in str) {
+            when {
+                permittedFilenameCharacters.contains(c) -> append(c)
+                c == '%' -> append("%%")
+                else -> append("%u").append(String.format("%04x", c.code))
+            }
         }
     }
-    if (builder.length == str.length) return str
-    return builder.toString()
 }
 
 internal fun decodeFilename(str: String): String {
     if (str.indexOf('%') < 0) return str
-    val builder = StringBuilder(str.length)
-    var i = 0
-    while (i < str.length - 1) {
-        val c = str[i]
-        if (c == '%') {
-            val cc = str[i + 1]
-            i += when (cc) {
-                '%' -> {
-                    builder.append('%')
-                    2
+
+    return buildString(str.length) {
+        var i = 0
+        while (i < str.length - 1) {
+            val c = str[i]
+            if (c == '%') {
+                val cc = str[i + 1]
+                i += when (cc) {
+                    '%' -> {
+                        append('%')
+                        2
+                    }
+                    'u' -> {
+                        append(str.substring(i + 2, i + 6).toInt(16).toChar())
+                        6
+                    }
+                    else -> error("Illegal escape specifier %$cc in $str")
                 }
-                'u' -> {
-                    builder.append(str.substring(i + 2, i + 6).toInt(16).toChar())
-                    6
-                }
-                else -> throw RuntimeException("Illegal escape specifier %$cc in $str")
+            }
+            else {
+                append(c)
+                i += 1
             }
         }
-        else {
-            builder.append(c)
-            i += 1
-        }
     }
-    return builder.toString()
 }
