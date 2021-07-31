@@ -12,7 +12,7 @@ dependencies {
     api(project(":api"))
     implementation("org.slf4j:slf4j-api:${LibraryVersions.slf4j}")
     implementation("org.tukaani:xz:1.9")
-    implementation("org.apache.commons:commons-compress:1.15")
+    implementation("org.apache.commons:commons-compress:1.21")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava:${LibraryVersions.jackson}")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${LibraryVersions.jackson}")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${LibraryVersions.jackson}")
