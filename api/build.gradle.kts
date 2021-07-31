@@ -23,12 +23,12 @@ java {
 
 dependencies {
     commonMainApi(kotlin("stdlib-common"))
-    commonMainApi("org.jetbrains.kotlinx:kotlinx-coroutines-core:${LibraryVersions.coroutines}")
+    commonMainApi("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
     commonMainApi("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
 
     "jvmMainApi"(kotlin("stdlib-jdk8"))
-    "jvmMainApi"("com.google.guava:guava:${LibraryVersions.guava}")
-    "jvmMainApi"("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${LibraryVersions.coroutines}")
+    "jvmMainApi"("com.google.guava:guava:30.1-jre")
+    "jvmMainApi"("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.1")
 
     "jsMainApi"(kotlin("stdlib-js"))
     "jsMainImplementation"("org.jetbrains.kotlinx:kotlinx-nodejs:0.0.7")

@@ -10,17 +10,18 @@ description = "Event store based on storing events in local filesystem"
 
 dependencies {
     api(project(":api"))
-    implementation("org.slf4j:slf4j-api:${LibraryVersions.slf4j}")
+    implementation("org.slf4j:slf4j-api:1.7.30")
     implementation("org.tukaani:xz:1.9")
     implementation("org.apache.commons:commons-compress:1.21")
-    implementation("com.fasterxml.jackson.core:jackson-core:${LibraryVersions.jackson}")
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.10.5"))
+    implementation("com.fasterxml.jackson.core:jackson-core")
     implementation(platform(kotlin("bom")))
     testImplementation(kotlin("test-junit"))
     testImplementation("junit:junit:4.13.2")
     testImplementation(project(":api:testing"))
     testImplementation("com.timgroup:clocks-testing:1.0.1070")
-    testImplementation("org.araqnid.kotlin.assert-that:assert-that:${LibraryVersions.assertThat}")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${LibraryVersions.serialization}")
+    testImplementation("org.araqnid.kotlin.assert-that:assert-that:0.1.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
 }
 
 java {

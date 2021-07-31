@@ -23,7 +23,7 @@ java {
 
 dependencies {
     commonMainApi(project(":api"))
-    commonMainImplementation("org.araqnid.kotlin.assert-that:assert-that:${LibraryVersions.assertThat}")
+    commonMainImplementation("org.araqnid.kotlin.assert-that:assert-that:0.1.1")
     commonMainImplementation(kotlin("test-common"))
     commonMainImplementation(kotlin("test-annotations-common"))
     "jvmMainApi"(kotlin("test-junit"))

@@ -10,19 +10,20 @@ description = "Service to chase event store and read/write snapshots"
 
 dependencies {
     api(project(":api"))
-    implementation("org.slf4j:slf4j-api:${LibraryVersions.slf4j}")
+    implementation("org.slf4j:slf4j-api:1.7.30")
     implementation("org.tukaani:xz:1.9")
     implementation("org.apache.commons:commons-compress:1.21")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava:${LibraryVersions.jackson}")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${LibraryVersions.jackson}")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${LibraryVersions.jackson}")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${LibraryVersions.jackson}")
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.10.5"))
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-guava")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation(platform(kotlin("bom")))
     testImplementation(kotlin("test-junit"))
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:3.11.2")
     testImplementation("com.timgroup:clocks-testing:1.0.1070")
-    testImplementation("org.araqnid.kotlin.assert-that:assert-that:${LibraryVersions.assertThat}")
+    testImplementation("org.araqnid.kotlin.assert-that:assert-that:0.1.1")
 }
 
 java {
