@@ -19,7 +19,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${LibraryVersions.jackson}")
     implementation(platform(kotlin("bom")))
     testImplementation(kotlin("test-junit"))
-    testImplementation("junit:junit:4.13")
+    testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:3.2.4")
     testImplementation("com.timgroup:clocks-testing:1.0.1070")
     testImplementation("org.araqnid.kotlin.assert-that:assert-that:${LibraryVersions.assertThat}")
