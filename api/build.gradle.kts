@@ -1,7 +1,12 @@
+import java.net.URI
+
 plugins {
     kotlin("multiplatform")
     `maven-publish`
+    signing
 }
+
+description = "Eventstore API and empty/in-memory implementations"
 
 kotlin {
     jvm { }
@@ -56,11 +61,61 @@ tasks {
     }
 }
 
+val javadocJar = tasks.register("javadocJar", Jar::class.java) {
+    archiveClassifier.set("javadoc")
+}
+
 publishing {
-    repositories {
-        maven(url = "https://maven.pkg.github.com/araqnid/eventstore") {
-            name = "github"
-            credentials(githubUserCredentials(project))
+    publications {
+        withType<MavenPublication> {
+            if (!artifactId.startsWith("eventstore"))
+                artifactId = "eventstore-$artifactId"
+            artifact(javadocJar)
+            pom {
+                name.set(project.name)
+                description.set(project.description)
+                licenses {
+                    license {
+                        name.set("Apache")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                url.set("https://github.com/araqnid/eventstore")
+                issueManagement {
+                    system.set("Github")
+                    url.set("https://github.com/araqnid/eventstore/issues")
+                }
+                scm {
+                    connection.set("https://github.com/araqnid/eventstore.git")
+                    url.set("https://github.com/araqnid/eventstore")
+                }
+                developers {
+                    developer {
+                        name.set("Steven Haslam")
+                        email.set("araqnid@gmail.com")
+                    }
+                }
+            }
         }
     }
+
+    repositories {
+        val sonatypeUser: String? by project
+        if (sonatypeUser != null) {
+            maven {
+                name = "OSSRH"
+                url = URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                val sonatypePassword: String by project
+                credentials {
+                    username = sonatypeUser
+                    password = sonatypePassword
+                }
+            }
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign(publishing.publications)
 }

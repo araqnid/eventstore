@@ -1,12 +1,12 @@
+import java.net.URI
+
 plugins {
     kotlin("jvm")
     `maven-publish`
-    `java-library`
+    signing
 }
 
-repositories {
-    jcenter()
-}
+description = "Event store based on storing events in local filesystem"
 
 dependencies {
     api(project(":api"))
@@ -50,18 +50,61 @@ tasks {
     }
 }
 
+val javadocJar = tasks.register("javadocJar", Jar::class.java) {
+    archiveClassifier.set("javadoc")
+}
+
 publishing {
     publications {
         register<MavenPublication>("mavenJava") {
             from(components["java"])
             artifactId = "eventstore${project.path.replace(':', '-')}"
+            artifact(javadocJar)
+            pom {
+                name.set(project.name)
+                description.set(project.description)
+                licenses {
+                    license {
+                        name.set("Apache")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                url.set("https://github.com/araqnid/eventstore")
+                issueManagement {
+                    system.set("Github")
+                    url.set("https://github.com/araqnid/eventstore/issues")
+                }
+                scm {
+                    connection.set("https://github.com/araqnid/eventstore.git")
+                    url.set("https://github.com/araqnid/eventstore")
+                }
+                developers {
+                    developer {
+                        name.set("Steven Haslam")
+                        email.set("araqnid@gmail.com")
+                    }
+                }
+            }
         }
     }
 
     repositories {
-        maven(url = "https://maven.pkg.github.com/araqnid/eventstore") {
-            name = "github"
-            credentials(githubUserCredentials(project))
+        val sonatypeUser: String? by project
+        if (sonatypeUser != null) {
+            maven {
+                name = "OSSRH"
+                url = URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                val sonatypePassword: String by project
+                credentials {
+                    username = sonatypeUser
+                    password = sonatypePassword
+                }
+            }
         }
     }
+}
+
+signing {
+    useGpgCmd()
+    sign(publishing.publications)
 }
