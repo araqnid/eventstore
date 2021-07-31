@@ -6,6 +6,8 @@ plugins {
     signing
 }
 
+description = "Abstract tests to run against event store implementations to check API compliance"
+
 kotlin {
     jvm { }
     js(IR) {
