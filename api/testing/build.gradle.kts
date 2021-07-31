@@ -25,7 +25,7 @@ dependencies {
     commonMainImplementation(kotlin("test-common"))
     commonMainImplementation(kotlin("test-annotations-common"))
     "jvmMainApi"(kotlin("test-junit"))
-    "jvmMainApi"("junit:junit:4.13")
+    "jvmMainApi"("junit:junit:4.13.2")
 }
 
 tasks {
