@@ -17,7 +17,9 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation(platform(kotlin("bom")))
     testImplementation(kotlin("test-junit"))
-    testImplementation("junit:junit:4.13.2")
+    constraints {
+        testImplementation("junit:junit:4.13.2")
+    }
     testImplementation(project(":api:testing"))
     testImplementation("com.timgroup:clocks-testing:1.0.1088")
     testImplementation("org.araqnid.kotlin.assert-that:assert-that:0.1.1")

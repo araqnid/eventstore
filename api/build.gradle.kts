@@ -38,7 +38,9 @@ dependencies {
     commonTestImplementation(project(":api:testing"))
 
     "jvmTestImplementation"(kotlin("test-junit"))
-    "jvmTestImplementation"("junit:junit:4.13.2")
+    constraints {
+        "jvmTestImplementation"("junit:junit:4.13.2")
+    }
 
     "jsTestImplementation"(kotlin("test-js"))
 }
