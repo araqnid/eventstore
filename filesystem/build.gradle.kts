@@ -10,7 +10,7 @@ description = "Event store based on storing events in local filesystem"
 
 dependencies {
     api(project(":api"))
-    implementation("org.slf4j:slf4j-api:1.7.30")
+    implementation("org.slf4j:slf4j-api:1.7.32")
     implementation("org.tukaani:xz:1.9")
     implementation("org.apache.commons:commons-compress:1.21")
     implementation(platform("com.fasterxml.jackson:jackson-bom:2.10.5"))
