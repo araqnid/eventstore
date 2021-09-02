@@ -23,7 +23,7 @@ java {
 
 dependencies {
     commonMainApi(kotlin("stdlib-common"))
-    commonMainApi("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    commonMainApi("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     commonMainApi("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
 
     "jvmMainApi"(kotlin("stdlib-jdk8"))
