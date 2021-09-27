@@ -27,7 +27,7 @@ dependencies {
     commonMainApi("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
 
     "jvmMainApi"(kotlin("stdlib-jdk8"))
-    "jvmMainApi"("com.google.guava:guava:30.1.1-jre")
+    "jvmMainApi"("com.google.guava:guava:31.0-jre")
     "jvmMainApi"("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.1")
 
     "jsMainApi"(kotlin("stdlib-js"))
