@@ -28,7 +28,7 @@ dependencies {
 
     "jvmMainApi"(kotlin("stdlib-jdk8"))
     "jvmMainApi"("com.google.guava:guava:30.1.1-jre")
-    "jvmMainApi"("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.1")
+    "jvmMainApi"("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.1")
 
     "jsMainApi"(kotlin("stdlib-js"))
     "jsMainImplementation"("org.jetbrains.kotlinx:kotlinx-nodejs:0.0.7")
