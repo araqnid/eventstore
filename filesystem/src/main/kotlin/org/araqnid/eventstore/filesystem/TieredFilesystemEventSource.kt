@@ -86,12 +86,13 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
             val timestampString = dateFormatter.format(clock.now())
             events.forEach { (eventType, data, metadata) ->
                 val hexEventNumber = String.format("%08x", nextEventNumber)
-                val dataPath = dir.resolve("$timestampString.$hexEventNumber.$eventType.data.json")!!
-                val dataSink = MoreFiles.asByteSink(dataPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)!!
+                val dataPath = dir.resolve("$timestampString.$hexEventNumber.$eventType.data.json")
+                val dataSink = MoreFiles.asByteSink(dataPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
                 data.copyTo(dataSink)
                 if (!metadata.isEmpty) {
-                    val metadataPath = dir.resolve("$timestampString.$hexEventNumber.$eventType.meta.json")!!
-                    val metadataSink = MoreFiles.asByteSink(metadataPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)!!
+                    val metadataPath = dir.resolve("$timestampString.$hexEventNumber.$eventType.meta.json")
+                    val metadataSink =
+                        MoreFiles.asByteSink(metadataPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
                     metadata.copyTo(metadataSink)
                 }
                 ++nextEventNumber
@@ -122,10 +123,10 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
         val eventNumber: Long = matchResult.groupValues[2].toLong(16)
         val eventType: String = matchResult.groupValues[3]
         val dataSource: ByteSource = MoreFiles.asByteSource(dataPath)
-        val metadataPath = dataPath.resolveSibling(toMetadataFilename(dataPath.fileName.toString()))!!
+        val metadataPath = dataPath.resolveSibling(toMetadataFilename(dataPath.fileName.toString()))
         val metadataSource: ByteSource =
                 if (Files.exists(metadataPath))
-                    MoreFiles.asByteSource(metadataPath)!!
+                    MoreFiles.asByteSource(metadataPath)
                 else
                     ByteSource.empty()
 
