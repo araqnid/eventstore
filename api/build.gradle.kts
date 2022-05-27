@@ -54,6 +54,7 @@ val javadocJar = tasks.register("javadocJar", Jar::class.java) {
 publishing {
     publications {
         register<MavenPublication>("mavenJava") {
+            from(components["java"])
             if (!artifactId.startsWith("eventstore"))
                 artifactId = "eventstore-$artifactId"
             artifact(javadocJar)
