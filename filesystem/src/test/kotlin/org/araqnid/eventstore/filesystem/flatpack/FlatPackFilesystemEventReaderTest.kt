@@ -1,5 +1,6 @@
 package org.araqnid.eventstore.filesystem.flatpack
 
+import kotlinx.datetime.toJavaInstant
 import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventRecord
 import org.araqnid.eventstore.ResolvedEvent
@@ -99,6 +100,7 @@ class FlatPackFilesystemEventReaderTest {
     private fun event(streamId: StreamId, eventType: String, timestamp: Instant, eventNumber: Long, expectedJson: String): Matcher<ResolvedEvent> {
         val record = has(EventRecord::streamId, equalTo(streamId)) and
                 has(EventRecord::eventNumber, equalTo(eventNumber)) and
+                has(EventRecord::javaTimestamp, equalTo(timestamp)) and
                 has(EventRecord::type, equalTo(eventType)) and
                 has(EventRecord::data, has(Blob::content, bytesEquivalentTo(expectedJson)))
 
@@ -108,3 +110,6 @@ class FlatPackFilesystemEventReaderTest {
 
 private val Blob.content: ByteArray
     get() = read()
+
+private val EventRecord.javaTimestamp: Instant
+    get() = timestamp.toJavaInstant()
