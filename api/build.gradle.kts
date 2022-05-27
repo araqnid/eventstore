@@ -11,6 +11,7 @@ description = "Eventstore API and empty/in-memory implementations"
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
 }
 
 dependencies {
@@ -29,7 +30,7 @@ dependencies {
 }
 
 tasks {
-    named("jar", Jar::class).configure {
+    "jar"(Jar::class) {
         manifest {
             attributes["Implementation-Title"] = project.description ?: project.name
             attributes["Implementation-Version"] = project.version
@@ -52,7 +53,7 @@ val javadocJar = tasks.register("javadocJar", Jar::class.java) {
 
 publishing {
     publications {
-        withType<MavenPublication> {
+        register<MavenPublication>("mavenJava") {
             if (!artifactId.startsWith("eventstore"))
                 artifactId = "eventstore-$artifactId"
             artifact(javadocJar)
