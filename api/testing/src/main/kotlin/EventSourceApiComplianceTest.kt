@@ -1,6 +1,9 @@
 package org.araqnid.eventstore.testing
 
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.araqnid.eventstore.*
 import org.araqnid.kotlin.assertthat.*
@@ -350,13 +353,3 @@ private inline fun assertThrows(crossinline body: () -> Unit): Throwable {
 }
 
 private suspend fun Flow<ResolvedEvent>.readEvents(): List<EventRecord> = map { it.event }.toList()
-
-private suspend fun <T : Any> Flow<T>.maxWithOrNull(comparator: Comparator<in T>): T? {
-    var maxValue: T? = null
-    collect { value ->
-        maxValue = maxValue?.let {
-            if (comparator.compare(value, it) > 0) value else it
-        } ?: value
-    }
-    return maxValue
-}
