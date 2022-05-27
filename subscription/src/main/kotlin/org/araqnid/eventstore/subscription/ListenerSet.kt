@@ -19,7 +19,7 @@ internal class ListenerSet<L> {
 
     fun proxy(clazz: Class<L>): L {
         return Reflection.newProxy(clazz, object : AbstractInvocationHandler() {
-            override fun handleInvocation(proxy: Any, method: Method, args: Array<out Any>): Any? {
+            override fun handleInvocation(proxy: Any, method: Method, args: Array<out Any?>): Any? {
                 emit { method.invoke(it, *args) }
                 return null
             }
