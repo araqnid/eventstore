@@ -42,7 +42,7 @@ tasks {
     }
 
     withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().configureEach {
-        kotlinOptions.freeCompilerArgs += listOf("-Xopt-in=kotlin.RequiresOptIn")
+        kotlinOptions.freeCompilerArgs += listOf("-opt-in=kotlin.RequiresOptIn")
     }
 }
 

@@ -49,7 +49,7 @@ tasks {
     }
     withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().configureEach {
         kotlinOptions {
-            freeCompilerArgs += listOf("-Xopt-in=kotlinx.coroutines.FlowPreview")
+            freeCompilerArgs += listOf("-opt-in=kotlinx.coroutines.FlowPreview")
         }
     }
 }
