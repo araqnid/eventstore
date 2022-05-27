@@ -23,7 +23,8 @@ dependencies {
     testImplementation(project(":api:testing"))
     testImplementation("com.timgroup:clocks-testing:1.0.1088")
     testImplementation("org.araqnid.kotlin.assert-that:assert-that:0.1.1")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
+    testImplementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.3.3"))
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 }
 
 java {
