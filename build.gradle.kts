@@ -16,6 +16,5 @@ subprojects {
 
     repositories {
         mavenCentral()
-        jcenter() // for kotlinx-nodejs
     }
 }
