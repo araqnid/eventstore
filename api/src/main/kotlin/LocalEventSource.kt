@@ -3,7 +3,7 @@ package org.araqnid.eventstore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.datetime.Clock
-import kotlin.jvm.Synchronized
+import java.util.concurrent.CopyOnWriteArrayList
 
 class LocalEventSource(private val clock: Clock = Clock.System) : EventSource, EventReader, EventStreamReader, EventStreamWriter {
     companion object {
@@ -12,7 +12,7 @@ class LocalEventSource(private val clock: Clock = Clock.System) : EventSource, E
             { str -> LocalPosition(str.toInt()) })
     }
 
-    private val content = createLocalEventSourceContent()
+    private val content: MutableList<ResolvedEvent> = CopyOnWriteArrayList()
 
     override val storeReader: EventReader
         get() = this
@@ -60,5 +60,3 @@ class LocalEventSource(private val clock: Clock = Clock.System) : EventSource, E
         override fun compareTo(other: LocalPosition): Int = index.compareTo(other.index)
     }
 }
-
-internal expect fun createLocalEventSourceContent(): MutableList<ResolvedEvent>

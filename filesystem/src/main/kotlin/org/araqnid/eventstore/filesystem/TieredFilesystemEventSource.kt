@@ -9,19 +9,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.stream.consumeAsFlow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import org.araqnid.eventstore.EventReader
-import org.araqnid.eventstore.EventRecord
-import org.araqnid.eventstore.EventSource
-import org.araqnid.eventstore.EventStreamReader
-import org.araqnid.eventstore.EventStreamWriter
-import org.araqnid.eventstore.GuavaBlob
-import org.araqnid.eventstore.NewEvent
-import org.araqnid.eventstore.NoSuchStreamException
-import org.araqnid.eventstore.Position
-import org.araqnid.eventstore.ResolvedEvent
-import org.araqnid.eventstore.StreamId
-import org.araqnid.eventstore.emptyStreamEventNumber
-import org.araqnid.eventstore.positionCodecOfComparable
+import org.araqnid.eventstore.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -141,7 +129,7 @@ class TieredFilesystemEventSource(val baseDirectory: Path, val clock: Clock) : E
                 else
                     ByteSource.empty()
 
-        return EventRecord(streamId, eventNumber, timestamp, eventType, GuavaBlob.fromSource(dataSource), GuavaBlob.fromSource(metadataSource))
+        return EventRecord(streamId, eventNumber, timestamp, eventType, Blob.fromSource(dataSource), Blob.fromSource(metadataSource))
                 .toResolvedEvent(FilesystemPosition(dataPath.fileName))
     }
 

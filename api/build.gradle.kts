@@ -1,20 +1,12 @@
 import java.net.URI
 
 plugins {
-    kotlin("multiplatform")
+    kotlin("jvm")
     `maven-publish`
     signing
 }
 
 description = "Eventstore API and empty/in-memory implementations"
-
-kotlin {
-    jvm { }
-    js(IR) {
-        nodejs { }
-        useCommonJs()
-    }
-}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -22,31 +14,21 @@ java {
 }
 
 dependencies {
-    commonMainApi(kotlin("stdlib-common"))
-    commonMainApi("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
-    commonMainApi("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
+    api(kotlin("stdlib-jdk8"))
+    api("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+    api("com.google.guava:guava:30.1.1-jre")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.1")
 
-    "jvmMainApi"(kotlin("stdlib-jdk8"))
-    "jvmMainApi"("com.google.guava:guava:30.1.1-jre")
-    "jvmMainApi"("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.1")
-
-    "jsMainApi"(kotlin("stdlib-js"))
-    "jsMainImplementation"("org.jetbrains.kotlinx:kotlinx-nodejs:0.0.7")
-
-    commonTestImplementation(kotlin("test-common"))
-    commonTestImplementation(kotlin("test-annotations-common"))
-    commonTestImplementation(project(":api:testing"))
-
-    "jvmTestImplementation"(kotlin("test-junit"))
+    testImplementation(kotlin("test-junit"))
+    testImplementation(project(":api:testing"))
     constraints {
-        "jvmTestImplementation"("junit:junit:4.13.2")
+        testImplementation("junit:junit:4.13.2")
     }
-
-    "jsTestImplementation"(kotlin("test-js"))
 }
 
 tasks {
-    "jvmJar"(Jar::class) {
+    named("jar", Jar::class).configure {
         manifest {
             attributes["Implementation-Title"] = project.description ?: project.name
             attributes["Implementation-Version"] = project.version

@@ -1,7 +1,7 @@
 package org.araqnid.eventstore.filesystem
 
+import org.araqnid.eventstore.Blob
 import org.araqnid.eventstore.EventSource
-import org.araqnid.eventstore.GuavaBlob
 import org.araqnid.eventstore.NewEvent
 import org.araqnid.eventstore.StreamId
 import org.araqnid.eventstore.testing.EventSourceApiComplianceTest
@@ -29,7 +29,7 @@ class TieredFilesystemEventSourceTest : EventSourceApiComplianceTest() {
         // event numbers have fixed width, and are encoded as hex with lower case
         clock = JavaClock.fixed(Instant.parse("2017-03-30T22:54:00Z"), ZoneId.systemDefault())
         eventSource.streamWriter.write(StreamId("test", "test"),
-                (1..20).map { NewEvent("test", GuavaBlob.empty ) })
+                (1..20).map { NewEvent("test", Blob.empty ) })
         val streamDirectory = temporaryFolder.root.toPath().resolve("test/test")
         assertThat(Files.list(streamDirectory).map { p -> p.fileName.toString() }.use { it.toList() },
                 containsTheItem(equalTo("2017-03-30T22:54:00.000000000Z.0000000a.test.data.json"))

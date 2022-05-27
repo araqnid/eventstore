@@ -8,19 +8,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.stream.consumeAsFlow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import org.araqnid.eventstore.EventReader
-import org.araqnid.eventstore.EventRecord
-import org.araqnid.eventstore.EventSource
-import org.araqnid.eventstore.EventStreamReader
-import org.araqnid.eventstore.EventStreamWriter
-import org.araqnid.eventstore.GuavaBlob
-import org.araqnid.eventstore.NewEvent
-import org.araqnid.eventstore.Position
-import org.araqnid.eventstore.PositionCodec
-import org.araqnid.eventstore.ResolvedEvent
-import org.araqnid.eventstore.StreamId
-import org.araqnid.eventstore.emptyStreamEventNumber
-import org.araqnid.eventstore.positionCodecOfComparable
+import org.araqnid.eventstore.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -56,11 +44,11 @@ class FlatFilesystemEventSource(val baseDirectory: Path, val clock: Clock = Cloc
             val eventType = matcher.groupValues[5]
             val metadataPath = dataPath.resolveSibling(metadataFilenameFor(dataPath.fileName.toString()))
 
-            val dataBlob = GuavaBlob.fromSource(MoreFiles.asByteSource(dataPath))
+            val dataBlob = Blob.fromSource(MoreFiles.asByteSource(dataPath))
             val metadataBlob = if (Files.exists(metadataPath))
-                GuavaBlob.fromSource(MoreFiles.asByteSource(metadataPath))
+                Blob.fromSource(MoreFiles.asByteSource(metadataPath))
             else
-                GuavaBlob.empty
+                Blob.empty
 
             return EventRecord(streamId, eventNumber, timestamp, eventType, dataBlob, metadataBlob).toResolvedEvent(LooseFile(dataPath.fileName.toString()))
         }

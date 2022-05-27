@@ -3,22 +3,9 @@ package org.araqnid.eventstore.filesystem.flatpack
 import com.fasterxml.jackson.core.JsonFactory
 import com.google.common.io.ByteStreams
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Instant
-import org.araqnid.eventstore.EventReader
-import org.araqnid.eventstore.EventRecord
-import org.araqnid.eventstore.GuavaBlob
-import org.araqnid.eventstore.Position
-import org.araqnid.eventstore.ResolvedEvent
-import org.araqnid.eventstore.StreamId
+import org.araqnid.eventstore.*
 import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -112,6 +99,6 @@ class FlatPackFilesystemEventReader(val baseDirectory: Path, private val lockabl
             }
         }
         return EventRecord(StreamId(category, streamId), eventNumber, timestamp, eventType,
-                GuavaBlob(dataOutput.toByteArray()), GuavaBlob(metadataOutput.toByteArray()))
+                Blob(dataOutput.toByteArray()), Blob(metadataOutput.toByteArray()))
     }
 }

@@ -1,20 +1,12 @@
 import java.net.URI
 
 plugins {
-    kotlin("multiplatform")
+    kotlin("jvm")
     `maven-publish`
     signing
 }
 
 description = "Abstract tests to run against event store implementations to check API compliance"
-
-kotlin {
-    jvm { }
-    js(IR) {
-        nodejs { }
-        useCommonJs()
-    }
-}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -22,18 +14,16 @@ java {
 }
 
 dependencies {
-    commonMainApi(project(":api"))
-    commonMainImplementation("org.araqnid.kotlin.assert-that:assert-that:0.1.1")
-    commonMainImplementation(kotlin("test-common"))
-    commonMainImplementation(kotlin("test-annotations-common"))
-    "jvmMainApi"(kotlin("test-junit"))
+    api(project(":api"))
+    implementation("org.araqnid.kotlin.assert-that:assert-that:0.1.1")
+    api(kotlin("test-junit"))
     constraints {
-        "jvmMainApi"("junit:junit:4.13.2")
+        api("junit:junit:4.13.2")
     }
 }
 
 tasks {
-    "jvmJar"(Jar::class) {
+    named("jar", Jar::class).configure {
         manifest {
             attributes["Implementation-Title"] = project.description ?: project.name
             attributes["Implementation-Version"] = project.version

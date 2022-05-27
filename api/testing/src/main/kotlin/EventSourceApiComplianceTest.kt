@@ -1,38 +1,17 @@
 package org.araqnid.eventstore.testing
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.single
-import kotlinx.coroutines.flow.toList
-import org.araqnid.eventstore.Blob
-import org.araqnid.eventstore.EventRecord
-import org.araqnid.eventstore.EventSource
-import org.araqnid.eventstore.NewEvent
-import org.araqnid.eventstore.ResolvedEvent
-import org.araqnid.eventstore.StreamId
-import org.araqnid.eventstore.emptyStreamEventNumber
-import org.araqnid.eventstore.isWrongExpectedVersionException
-import org.araqnid.eventstore.readUTF8
-import org.araqnid.eventstore.toBlob
-import org.araqnid.kotlin.assertthat.Matcher
-import org.araqnid.kotlin.assertthat.and
-import org.araqnid.kotlin.assertthat.assertThat
-import org.araqnid.kotlin.assertthat.containsInOrder
-import org.araqnid.kotlin.assertthat.containsOnly
-import org.araqnid.kotlin.assertthat.describedBy
-import org.araqnid.kotlin.assertthat.emptyCollection
-import org.araqnid.kotlin.assertthat.equalTo
-import org.araqnid.kotlin.assertthat.has
-import org.araqnid.kotlin.assertthat.lessThan
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.runBlocking
+import org.araqnid.eventstore.*
+import org.araqnid.kotlin.assertthat.*
+import kotlin.test.Test
 import kotlin.test.fail
 
-expect abstract class EventSourceApiComplianceTest() {
+abstract class EventSourceApiComplianceTest() {
     abstract val eventSource: EventSource
-}
 
-class ComplianceTestImplementations(private val eventSource: EventSource) {
-    suspend fun read_events_written_to_stream() {
+    @Test
+    fun read_events_written_to_stream() = runBlocking {
         val streamId = StreamId("alpha", "1")
         val eventA = NewEvent(
             "type-A",
@@ -56,7 +35,8 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         )
     }
 
-    suspend fun read_and_write_to_streams_independently() {
+    @Test
+    fun read_and_write_to_streams_independently() = runBlocking {
         val stream0 = StreamId("alpha", "1")
         val stream1 = StreamId("beta", "2")
 
@@ -94,7 +74,8 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         assertThat(eventSource.streamReader.positionCodec.comparePositions(position1, position2), lessThan(0))
     }
 
-    suspend fun write_events_specifying_expected_version_number() {
+    @Test
+    fun write_events_specifying_expected_version_number() {
         val streamId = StreamId("alpha", "1")
         eventSource.streamWriter.write(
             streamId, listOf(
@@ -117,7 +98,8 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         )
     }
 
-    suspend fun write_events_specifying_expected_empty_version_number() {
+    @Test
+    fun write_events_specifying_expected_empty_version_number() {
         eventSource.streamWriter.write(
             StreamId("alpha", "1"),
             emptyStreamEventNumber, listOf(
@@ -130,7 +112,8 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         )
     }
 
-    suspend fun fails_if_expected_event_number_not_satisfied_yet() {
+    @Test
+    fun fails_if_expected_event_number_not_satisfied_yet() {
         val ex = assertThrows {
             eventSource.streamWriter.write(
                 StreamId("alpha", "1"), 0, listOf(
@@ -142,10 +125,11 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
                 )
             )
         }
-        assertThat(ex, has(Throwable::isWrongExpectedVersionException, equalTo(true)))
+        assertThat(ex, isWrongExpectedVersionException())
     }
 
-    suspend fun fails_if_expected_event_number_already_passed() {
+    @Test
+    fun fails_if_expected_event_number_already_passed() {
         val streamId = StreamId("alpha", "1")
         eventSource.streamWriter.write(
             streamId, listOf(
@@ -173,10 +157,11 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
                 )
             )
         }
-        assertThat(ex, has(Throwable::isWrongExpectedVersionException, equalTo(true)))
+        assertThat(ex, isWrongExpectedVersionException())
     }
 
-    suspend fun read_stream_after_specific_event_number() {
+    @Test
+    fun read_stream_after_specific_event_number() = runBlocking {
         val streamId = StreamId("alpha", "1")
         val eventA = NewEvent(
             "type-A",
@@ -203,7 +188,8 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         )
     }
 
-    suspend fun read_empty_after_end_of_stream() {
+    @Test
+    fun read_empty_after_end_of_stream() = runBlocking {
         val streamId = StreamId("alpha", "1")
         val eventA = NewEvent(
             "type-A",
@@ -220,7 +206,8 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         assertThat(eventSource.streamReader.readStreamForwards(streamId, 1).readEvents(), emptyCollection)
     }
 
-    suspend fun read_all_events() {
+    @Test
+    fun read_all_events() = runBlocking {
         val eventA = NewEvent(
             "type-A",
             jsonBlob("A-data"),
@@ -253,7 +240,8 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         )
     }
 
-    suspend fun read_all_events_from_position() {
+    @Test
+    fun read_all_events_from_position() = runBlocking {
         val stream0 = StreamId("alpha", "1")
         val stream1 = StreamId("beta", "2")
         val stream2 = StreamId("gamma", "3")
@@ -286,7 +274,8 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
         )
     }
 
-    suspend fun read_empty_after_end_of_store() {
+    @Test
+    fun read_empty_after_end_of_store() = runBlocking {
         val stream0 = StreamId("alpha", "1")
         val stream1 = StreamId("beta", "2")
         val stream2 = StreamId("gamma", "3")
@@ -315,7 +304,7 @@ class ComplianceTestImplementations(private val eventSource: EventSource) {
     }
 }
 
-private fun jsonBlob(data: String) = "{\"data\":\"$data\"}".toBlob()
+private fun jsonBlob(data: String) = Blob.fromString("{\"data\":\"$data\"}")
 
 private fun eventRecord(streamId: StreamId, eventNumber: Long, asCreated: NewEvent) = eventRecord(
     streamId,
@@ -335,8 +324,20 @@ private fun eventRecord(
     return has(EventRecord::streamId, equalTo(streamId)) and
             has(EventRecord::eventNumber, equalTo(eventNumber)) and
             has(EventRecord::type, equalTo(type)) and
-            has(EventRecord::data, equalTo(data)).describedBy { data.readUTF8() } and
-            has(EventRecord::metadata, equalTo(metadata)).describedBy { metadata.readUTF8() }
+            has(EventRecord::data, equalTo(data)).describedBy { data.read().toString(Charsets.UTF_8) } and
+            has(EventRecord::metadata, equalTo(metadata)).describedBy { metadata.read().toString(Charsets.UTF_8) }
+}
+
+private fun isWrongExpectedVersionException(): Matcher<Throwable> {
+    return object : Matcher<Throwable> {
+        override fun match(actual: Throwable): AssertionResult {
+            return if (actual is WrongExpectedVersionException) AssertionResult.Match
+            else AssertionResult.Mismatch("is $actual")
+        }
+
+        override val description: String
+            get() = "is WrongExpectedVersionException"
+    }
 }
 
 private inline fun assertThrows(crossinline body: () -> Unit): Throwable {

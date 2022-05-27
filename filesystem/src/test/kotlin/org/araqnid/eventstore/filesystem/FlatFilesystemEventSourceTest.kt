@@ -6,11 +6,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
-import org.araqnid.eventstore.EventRecord
-import org.araqnid.eventstore.EventSource
-import org.araqnid.eventstore.GuavaBlob
-import org.araqnid.eventstore.ResolvedEvent
-import org.araqnid.eventstore.StreamId
+import org.araqnid.eventstore.*
 import org.araqnid.eventstore.testing.EventSourceApiComplianceTest
 import org.araqnid.kotlin.assertthat.assertThat
 import org.araqnid.kotlin.assertthat.equalTo
@@ -33,7 +29,7 @@ class FlatFilesystemEventSourceTest : EventSourceApiComplianceTest() {
         MoreFiles.asByteSink(baseDirectory.resolve("2017-03-30T22:54:00.000000000Z.category.id.0000000a.test.meta.json"))
                 .asCharSink(UTF_8).write("{ /*meta*/ }")
         val eventRecord = EventRecord(StreamId("category", "id"), 10L, Instant.parse("2017-03-30T22:54:00Z"),
-                "test", GuavaBlob.fromString("{ }"), GuavaBlob.fromString("{ /*meta*/ }"))
+                "test", Blob.fromString("{ }"), Blob.fromString("{ /*meta*/ }"))
 
         assertThat(eventSource.storeReader.readAllForwards().readEvents(), equalTo(listOf(eventRecord)))
         assertThat(eventSource.streamReader.readStreamForwards(eventRecord.streamId).readEvents(), equalTo(listOf(eventRecord)))

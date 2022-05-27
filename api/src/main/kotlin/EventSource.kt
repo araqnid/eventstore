@@ -34,11 +34,10 @@ data class ResolvedEvent(val position: Position, val event: EventRecord)
 data class EventRecord(val streamId: StreamId, val eventNumber: Long, val timestamp: Instant, val type: String, val data: Blob, val metadata: Blob) {
     fun toResolvedEvent(position: Position) = ResolvedEvent(position, this)
 }
-data class NewEvent(val type: String, val data: Blob, val metadata: Blob = emptyBlob) {
+data class NewEvent(val type: String, val data: Blob, val metadata: Blob = Blob.empty) {
     fun toEventRecord(streamId: StreamId, eventNumber: Long, timestamp: Instant) = EventRecord(streamId, eventNumber, timestamp, type, data, metadata)
 }
 
 class WrongExpectedVersionException(streamId: StreamId, eventNumber: Long, expectedEventNumber: Long) : Exception("Stream $streamId is at version $eventNumber, expected $expectedEventNumber")
-expect val Throwable.isWrongExpectedVersionException: Boolean
 
 class NoSuchStreamException(streamId: StreamId) : RuntimeException("No such stream: $streamId")

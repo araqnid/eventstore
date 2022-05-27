@@ -5,27 +5,14 @@ import com.google.common.util.concurrent.MoreExecutors.directExecutor
 import com.google.common.util.concurrent.Service
 import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.runBlocking
-import org.araqnid.eventstore.GuavaBlob
-import org.araqnid.eventstore.LocalEventSource
-import org.araqnid.eventstore.NewEvent
-import org.araqnid.eventstore.Position
-import org.araqnid.eventstore.ResolvedEvent
-import org.araqnid.eventstore.StreamId
-import org.araqnid.kotlin.assertthat.assertThat
-import org.araqnid.kotlin.assertthat.containsSubstring
-import org.araqnid.kotlin.assertthat.equalTo
-import org.araqnid.kotlin.assertthat.present
-import org.araqnid.kotlin.assertthat.sameInstance
+import org.araqnid.eventstore.*
+import org.araqnid.kotlin.assertthat.*
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.inOrder
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyNoMoreInteractions
+import org.mockito.Mockito.*
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
 import java.time.Duration
@@ -433,7 +420,7 @@ class SnapshotEventSubscriptionServiceTest {
         return runBlocking {
             val eventsWritten = eventSource.storeReader.readAllForwards(eventSource.storeReader.emptyStorePosition).count()
             eventSource.write(StreamId("test", "test"),
-                listOf(NewEvent("Test", GuavaBlob.fromString(eventsWritten.toString(), UTF_8))))
+                listOf(NewEvent("Test", Blob.fromString(eventsWritten.toString(), UTF_8))))
             eventSource.storeReader.readAllForwards(eventSource.storeReader.emptyStorePosition)
                 .maxWith(compareBy(Comparator(eventSource.positionCodec::comparePositions)) { it.position })!!
         }
